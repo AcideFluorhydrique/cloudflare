@@ -1257,195 +1257,57 @@ function generateStatsPage() {
     .slice(0, 15);
 
   return `<!DOCTYPE html>
-<html dir="rtl" lang="fa">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoH Proxy Pro - آمار زنده</title>
+    <title>DoH Proxy - 統計面板</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-            background-color: #0d1117;
-            color: #c9d1d9;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
-        h1 {
-            color: #58a6ff;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        .subtitle {
-            color: #8b949e;
-            margin-bottom: 40px;
-            font-size: 1.1em;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        .stat-card {
-            background: #1c2128;
-            border: 1px solid #30363d;
-            padding: 25px;
-            border-radius: 12px;
-            transition: all 0.2s;
-        }
-        .stat-card:hover {
-            border-color: #58a6ff;
-            transform: translateY(-2px);
-        }
-        .stat-label {
-            font-size: 0.9em;
-            color: #8b949e;
-            margin-bottom: 10px;
-        }
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #58a6ff;
-        }
-        .table-container {
-            background: #1c2128;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 30px;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 600px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-        th, td {
-            padding: 15px;
-            text-align: right;
-            border-bottom: 1px solid #30363d;
-        }
-        th {
-            background: #0d1117;
-            color: #58a6ff;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        tr:hover {
-            background: #161b22;
-        }
-        .health-bar {
-            height: 8px;
-            background: #21262d;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #238636 0%, #2ea043 100%);
-            transition: width 0.3s;
-        }
-        .back-button {
-            display: inline-block;
-            margin-top: 30px;
-            padding: 12px 30px;
-            background: #238636;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            transition: all 0.2s;
-            font-weight: 600;
-        }
-        .back-button:hover {
-            background: #2ea043;
-            transform: translateY(-2px);
-        }
-        @media (max-width: 768px) {
-            .container { padding: 20px; }
-            h1 { font-size: 1.8em; }
-            .stat-value { font-size: 2em; }
-            .table-wrapper { max-height: 400px; }
-            th, td { padding: 10px; font-size: 0.9em; }
-        }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 30px; }
+        h1 { color: #58a6ff; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { background: #21262d; }
+        .health-bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+        .health-fill { height: 100%; background: #238636; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 آمار زنده سرورها</h1>
-        <div class="subtitle">DoH Proxy Pro - Real-time Server Statistics</div>
+        <h1>📊 DoH Proxy 即時統計</h1>
+        <p>總上游伺服器數：${totalProviders} | 健康伺服器：${healthyProviders} | 平均健康度：${avgHealth.toFixed(1)}%</p>
         
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">تعداد کل سرورها</div>
-                <div class="stat-value">${totalProviders}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">سرورهای سالم</div>
-                <div class="stat-value">${healthyProviders}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">میانگین سلامت</div>
-                <div class="stat-value">${avgHealth.toFixed(1)}%</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">درخواست‌های کل</div>
-                <div class="stat-value">${globalRequestCount}</div>
-            </div>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>排名</th>
+                    <th>上游伺服器</th>
+                    <th>地區</th>
+                    <th>成功率</th>
+                    <th>平均響應時間</th>
+                    <th>健康度</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${topProviders.map((p, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${new URL(p.url).hostname}</td>
+                        <td>${p.region}</td>
+                        <td>${p.totalRequests > 0 ? ((p.successCount / p.totalRequests) * 100).toFixed(1) : 0}%</td>
+                        <td>${p.avgResponseTime > 0 ? p.avgResponseTime.toFixed(0) : '-'} ms</td>
+                        <td>
+                            ${p.healthScore.toFixed(0)}%
+                            <div class="health-bar"><div class="health-fill" style="width: ${p.healthScore}%"></div></div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
         
-        <div class="table-container">
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>رتبه</th>
-                            <th>سرور</th>
-                            <th>منطقه</th>
-                            <th>درصد موفقیت</th>
-                            <th>زمان پاسخ</th>
-                            <th>سلامت</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${topProviders.map((p, i) => `
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${new URL(p.url).hostname}</td>
-                                <td>${p.region.toUpperCase()}</td>
-                                <td>${p.totalRequests > 0 ? ((p.successCount / p.totalRequests) * 100).toFixed(1) : 0}%</td>
-                                <td>${p.avgResponseTime > 0 ? p.avgResponseTime.toFixed(0) : '-'} ms</td>
-                                <td>
-                                    ${p.healthScore.toFixed(0)}%
-                                    <div class="health-bar">
-                                        <div class="health-fill" style="width: ${p.healthScore}%"></div>
-                                    </div>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <a href="/" class="back-button">← بازگشت به صفحه اصلی</a>
+        <p style="margin-top: 30px;"><a href="/" style="color:#58a6ff;">← 返回首頁</a></p>
     </div>
 </body>
 </html>`;
