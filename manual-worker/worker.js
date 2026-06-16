@@ -2060,7 +2060,7 @@ async function handleRequest(request) {
     "access": "",
     "error": "",
     "loglevel": "warning",
-    "dnsLog": true
+    "dnsLog": false
   },
   "dns": {
     "tag": "dns-in",
@@ -2085,42 +2085,27 @@ async function handleRequest(request) {
       "1.1.1.1",
       "8.8.8.8"
     ],
-    "queryStrategy": "UseIPv4"
+    "queryStrategy": "UseIP"
   },
   "inbounds": [
     {
-      "tag": "socks-in",
+      "tag": "mixed-in",
       "port": 10808,
       "listen": "127.0.0.1",
-      "protocol": "socks",
+      "protocol": "mixed",
       "sniffing": {
         "enabled": true,
         "destOverride": [
           "http",
-          "tls"
+          "tls",
+          "quic",
+          "fakedns"
         ],
         "routeOnly": true
       },
       "settings": {
         "auth": "noauth",
         "udp": true,
-        "userLevel": 8
-      }
-    },
-    {
-      "tag": "http-in",
-      "port": 10809,
-      "listen": "127.0.0.1",
-      "protocol": "http",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "http",
-          "tls"
-        ],
-        "routeOnly": true
-      },
-      "settings": {
         "userLevel": 8
       }
     }
@@ -2132,9 +2117,10 @@ async function handleRequest(request) {
       "settings": {
         "domainStrategy": "UseIP",
         "fragment": {
-          "packets": "tlshello",
-          "length": "10-20",
-          "interval": "10-20"
+          "packets": "1-1",
+          "length": "1",
+          "interval": "13",
+          "maxSplit": "163"
         }
       },
       "streamSettings": {
@@ -2142,9 +2128,47 @@ async function handleRequest(request) {
           "tcpNoDelay": true,
           "tcpKeepAliveIdle": 100,
           "mark": 255,
+          "domainStrategy": "ForceIP",
+          "happyEyeballs": {
+            "tryDelayMs": 300,
+            "prioritizeIPv6": true,
+            "interleave": 2,
+            "maxConcurrentTry": 20
+          }
+        }
+      }
+    },
+    {
+      "tag": "udp-noises-out",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP",
+        "targetStrategy": "ForceIPv6v4",
+        "noises": [
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
+          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" }
+        ]
+      },
+      "streamSettings": {
+        "sockopt": {
+          "mark": 255,
           "domainStrategy": "UseIP"
         }
       }
+    },
+    {
+      "tag": "direct-out",
+      "protocol": "freedom"
     },
     {
       "tag": "dns-out",
@@ -2176,14 +2200,34 @@ async function handleRequest(request) {
         "type": "field",
         "outboundTag": "block",
         "ip": [
-          "geoip:private",
-          "geoip:cn"
+          "geoip:private"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct-out",
+        "domain": [
+          "domain:ir",
+          "geosite:category-ir"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "direct-out",
+        "ip": [
+          "geoip:ir"
         ]
       },
       {
         "type": "field",
         "outboundTag": "dns-out",
         "port": "53",
+        "network": "udp"
+      },
+      {
+        "type": "field",
+        "outboundTag": "udp-noises-out",
+        "port": "443",
         "network": "udp"
       },
       {
@@ -2200,8 +2244,7 @@ async function handleRequest(request) {
             <p><strong>مزایای کانفیگ Fragment:</strong><br>
             • قابلیت Fragment برای دور زدن DPI<br>
             • تکه‌تکه کردن بسته‌های TLS Hello<br>
-            • افزایش قابلیت دور زدن فیلترینگ‌های پیشرفته<br>
-            • پورت HTTP (10809) و SOCKS (10808)</p>
+            • افزایش قابلیت دور زدن فیلترینگ‌های پیشرفته</p>
         </div>
 
 
