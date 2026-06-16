@@ -58,13 +58,13 @@ const UPSTREAM_DNS_PROVIDERS = [
   { url: 'https://doh.ffmuc.net/dns-query', priority: 57, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.ffmuc.net', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'eu', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://doh.applied-privacy.net/query', priority: 58, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.applied-privacy.net', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'eu', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://dns.aa.net.uk/dns-query', priority: 59, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.aa.net.uk', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'eu', circuitState: 'closed', lastCircuitOpen: 0 },
-  { url: 'https://dns.alidns.com/dns-query', priority: 60, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.alidns.com', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
+  // { url: 'https://dns.alidns.com/dns-query', priority: 60, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.alidns.com', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://dns.twnic.tw/dns-query', priority: 61, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.twnic.tw', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
-  { url: 'https://dns.pub/dns-query', priority: 62, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.pub', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
-  { url: 'https://doh.360.cn/dns-query', priority: 63, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.360.cn', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
+  // { url: 'https://dns.pub/dns-query', priority: 62, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.pub', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
+  // { url: 'https://doh.360.cn/dns-query', priority: 63, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.360.cn', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://public.dns.iij.jp/dns-query', priority: 64, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'public.dns.iij.jp', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://doh.dns.sb/dns-query', priority: 65, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.dns.sb', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
-  { url: 'https://doh.pub/dns-query', priority: 66, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.pub', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
+  // { url: 'https://doh.pub/dns-query', priority: 66, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.pub', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://ordns.he.net/dns-query', priority: 67, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'ordns.he.net', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://dns.brahma.world/dns-query', priority: 68, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.brahma.world', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://dns.cfiec.net/dns-query', priority: 69, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.cfiec.net', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
@@ -195,7 +195,7 @@ const UPSTREAM_DNS_PROVIDERS = [
   { url: 'https://dns.flatuslifir.is/dns-query', priority: 224, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.flatuslifir.is', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'eu', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://dns.paesa.es/dns-query', priority: 225, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'dns.paesa.es', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'eu', circuitState: 'closed', lastCircuitOpen: 0 },
   { url: 'https://jcdns.pikapods.com/dns-query', priority: 226, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'jcdns.pikapods.com', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'global', circuitState: 'closed', lastCircuitOpen: 0 },
-  { url: 'https://doh.360.cn/dns-query', priority: 227, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.360.cn', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 }
+  // { url: 'https://doh.360.cn/dns-query', priority: 227, healthScore: 100, lastCheck: 0, consecutiveFailures: 0, fronting: 'doh.360.cn', avgResponseTime: 0, successCount: 0, totalRequests: 0, region: 'asia', circuitState: 'closed', lastCircuitOpen: 0 }
 ];
 
 const DNS_CACHE_TTL_MIN = 60;
@@ -1257,11 +1257,11 @@ function generateStatsPage() {
     .slice(0, 15);
 
   return `<!DOCTYPE html>
-<html dir="rtl" lang="fa">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoH Proxy Pro - آمار زنده</title>
+    <title>DoH Proxy Pro - Live Statistics</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -1337,7 +1337,7 @@ function generateStatsPage() {
         }
         th, td {
             padding: 15px;
-            text-align: right;
+            text-align: left;
             border-bottom: 1px solid #30363d;
         }
         th {
@@ -1389,24 +1389,24 @@ function generateStatsPage() {
 </head>
 <body>
     <div class="container">
-        <h1>📊 آمار زنده سرورها</h1>
+        <h1>📊 Live Server Statistics</h1>
         <div class="subtitle">DoH Proxy Pro - Real-time Server Statistics</div>
         
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-label">تعداد کل سرورها</div>
+                <div class="stat-label">Total Servers</div>
                 <div class="stat-value">${totalProviders}</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">سرورهای سالم</div>
+                <div class="stat-label">Healthy Servers</div>
                 <div class="stat-value">${healthyProviders}</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">میانگین سلامت</div>
+                <div class="stat-label">Average Health</div>
                 <div class="stat-value">${avgHealth.toFixed(1)}%</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">درخواست‌های کل</div>
+                <div class="stat-label">Total Requests</div>
                 <div class="stat-value">${globalRequestCount}</div>
             </div>
         </div>
@@ -1416,12 +1416,12 @@ function generateStatsPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>رتبه</th>
-                            <th>سرور</th>
-                            <th>منطقه</th>
-                            <th>درصد موفقیت</th>
-                            <th>زمان پاسخ</th>
-                            <th>سلامت</th>
+                            <th>Rank</th>
+                            <th>Server</th>
+                            <th>Region</th>
+                            <th>Success Rate</th>
+                            <th>Response Time</th>
+                            <th>Health</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1445,7 +1445,7 @@ function generateStatsPage() {
             </div>
         </div>
         
-        <a href="/" class="back-button">← بازگشت به صفحه اصلی</a>
+        <a href="/" class="back-button">← Back to Dashboard</a>
     </div>
 </body>
 </html>`;
@@ -1482,7 +1482,7 @@ async function handleRequest(request) {
   const statsUrl = `${baseUrl.protocol}//${baseUrl.hostname}/stats`;
 
   const html = `<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1580,7 +1580,7 @@ async function handleRequest(request) {
         .info-box {
             background: #1c2128;
             border: 1px solid #30363d;
-            border-right: 3px solid #58a6ff;
+            border-left: 3px solid #58a6ff;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
@@ -1712,7 +1712,7 @@ async function handleRequest(request) {
         .warning-box {
             background: #1c1917;
             border: 1px solid #f85149;
-            border-right: 3px solid #f85149;
+            border-left: 3px solid #f85149;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
@@ -1807,199 +1807,199 @@ async function handleRequest(request) {
         <div class="status-bar">
             <div class="status-indicator"></div>
             <div class="status-text">
-                <strong>فعال و آماده به کار</strong> - سیستم Parallel Racing، Circuit Breaker، Geo-selection و یادگیری تطبیقی فعال است
+                <strong>Active and ready</strong> - Parallel Racing, Circuit Breaker, geo-selection, and adaptive learning are enabled
             </div>
         </div>
         
         <div class="info-box">
-            <strong>این یک سرویس DNS over HTTPS (DoH) پیشرفته با قابلیت‌های Anti-Censorship است.</strong><br>
-            نسخه Pro با تکنولوژی‌های پیشرفته: Parallel DNS Racing، Circuit Breaker Pattern، Geo-based Selection، QNAME Minimization، DNS Padding، ECS Stripping، Negative Caching، Adaptive Timeouts، Enhanced Header Randomization و 15+ قابلیت دیگر.
+            <strong>This is an advanced DNS over HTTPS (DoH) service with anti-censorship features.</strong><br>
+            Pro version with Parallel DNS Racing, Circuit Breaker Pattern, geo-based selection, QNAME Minimization, DNS Padding, ECS Stripping, Negative Caching, Adaptive Timeouts, Enhanced Header Randomization, and 15+ other capabilities.
         </div>
         
-        <a href="${statsUrl}" class="stats-link">📊 مشاهده آمار زنده سرورها</a>
+        <a href="${statsUrl}" class="stats-link">📊 View Live Server Statistics</a>
 
-        <h2>📍 آدرس سرویس شما:</h2>
+        <h2>📍 Your Service Address:</h2>
         <div class="url-container">
             <div class="url-box" id="dohUrl">${workerUrl}</div>
-            <button class="copy-btn" onclick="copyToClipboard('dohUrl')">📋 کپی آدرس</button>
+            <button class="copy-btn" onclick="copyToClipboard('dohUrl')">📋 Copy Address</button>
         </div>
 
-        <h2>✨ ویژگی‌های پیشرفته:</h2>
+        <h2>✨ Advanced Features:</h2>
         <div class="feature-grid">
             <div class="feature-item">
                 <div class="feature-icon">⚡</div>
-                <div class="feature-text">Parallel DNS Racing - همزمان 10 سرور برتر را امتحان می‌کند</div>
+                <div class="feature-text">Parallel DNS Racing - tests the top 10 servers at the same time</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🛡️</div>
-                <div class="feature-text">Circuit Breaker Pattern - مدیریت خودکار سرورهای ناسالم</div>
+                <div class="feature-text">Circuit Breaker Pattern - automatically manages unhealthy servers</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🌍</div>
-                <div class="feature-text">Geo-based Selection - انتخاب بهترین سرور بر اساس موقعیت جغرافیایی</div>
+                <div class="feature-text">Geo-based Selection - chooses the best server based on location</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🧠</div>
-                <div class="feature-text">یادگیری تطبیقی مبتنی بر AI برای انتخاب هوشمند سرورها</div>
+                <div class="feature-text">AI-assisted adaptive learning for smarter server selection</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🔄</div>
-                <div class="feature-text">Load Balancing هوشمند بر اساس سرعت و قابلیت اطمینان</div>
+                <div class="feature-text">Smart load balancing based on speed and reliability</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🔒</div>
-                <div class="feature-text">DNS Padding (RFC 8467) - جلوگیری از Traffic Analysis</div>
+                <div class="feature-text">DNS Padding (RFC 8467) - helps prevent traffic analysis</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🎯</div>
-                <div class="feature-text">QNAME Minimization - حداقل‌سازی اطلاعات query</div>
+                <div class="feature-text">QNAME Minimization - reduces query information exposure</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🚫</div>
-                <div class="feature-text">ECS Stripping - حذف EDNS Client Subnet</div>
+                <div class="feature-text">ECS Stripping - removes EDNS Client Subnet data</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">💾</div>
-                <div class="feature-text">Smart LRU Caching - مدیریت هوشمند Cache</div>
+                <div class="feature-text">Smart LRU Caching - intelligent cache management</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">⏱️</div>
-                <div class="feature-text">Adaptive Timeouts - تنظیم خودکار زمان انتظار</div>
+                <div class="feature-text">Adaptive Timeouts - automatically adjusts wait times</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🔄</div>
-                <div class="feature-text">Negative Caching - Cache هوشمند NXDOMAIN</div>
+                <div class="feature-text">Negative Caching - intelligent NXDOMAIN caching</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">⚙️</div>
-                <div class="feature-text">استفاده از بیش از 200 سرور DNS معتبر جهانی</div>
+                <div class="feature-text">Uses more than 200 trusted global DNS servers</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🎭</div>
-                <div class="feature-text">Enhanced Header Randomization - ضد Fingerprinting</div>
+                <div class="feature-text">Enhanced Header Randomization - anti-fingerprinting protection</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">📊</div>
-                <div class="feature-text">امتیازدهی پویا: 35% سلامت، 30% سرعت، 20% قابلیت اطمینان، 15% منطقه</div>
+                <div class="feature-text">Dynamic scoring: 35% health, 30% speed, 20% reliability, 15% region</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🔄</div>
-                <div class="feature-text">Intelligent Fallback در صورت شکست Racing</div>
+                <div class="feature-text">Intelligent fallback when racing fails</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🌐</div>
-                <div class="feature-text">بهره‌مندی از ECH در سرورهای Cloudflare</div>
+                <div class="feature-text">Benefits from ECH on Cloudflare servers</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🔗</div>
-                <div class="feature-text">Request Coalescing - ادغام هوشمند درخواست‌های تکراری برای کاهش latency</div>
+                <div class="feature-text">Request Coalescing - merges duplicate requests to reduce latency</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🌏</div>
-                <div class="feature-text">CORS Support - پشتیبانی کامل از درخواست‌های مرورگر بدون محدودیت Cross-Origin</div>
+                <div class="feature-text">CORS Support - full browser request support without cross-origin limits</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">📡</div>
-                <div class="feature-text">JSON DoH API - پشتیبانی از فرمت application/dns-json برای سازگاری بیشتر</div>
+                <div class="feature-text">JSON DoH API - supports application/dns-json for broader compatibility</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🔐</div>
-                <div class="feature-text">اجرای واقعی RFC 8467 DNS Padding با OPT Record استاندارد</div>
+                <div class="feature-text">Real RFC 8467 DNS Padding with a standard OPT record</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🧹</div>
-                <div class="feature-text">ECS Stripping پیشرفته - پارس و حذف واقعی EDNS Client Subnet از OPT Record</div>
+                <div class="feature-text">Advanced ECS Stripping - parses and removes EDNS Client Subnet from OPT records</div>
             </div>
             <div class="feature-item">
                 <div class="feature-icon">🎲</div>
-                <div class="feature-text">Decoy Traffic با 20 دامنه متنوع برای مخفی‌سازی الگوی ترافیک DNS</div>
+                <div class="feature-text">Decoy Traffic with 20 varied domains to hide DNS traffic patterns</div>
             </div>
         </div>
 
-        <h2>🌐 DNS Providers استفاده شده:</h2>
+        <h2>🌐 DNS Providers Used:</h2>
         <div class="dns-list">
-            <div class="dns-item">بیش از 220 سرور DNS معتبر از کشورهای مختلف با پشتیبانی Geo-location</div>
+            <div class="dns-item">More than 200 trusted DNS servers from multiple countries with geo-location support</div>
             <div class="dns-item">• Cloudflare, Google, Quad9, OpenDNS</div>
             <div class="dns-item">• AdGuard, NextDNS, Mullvad</div>
-            <div class="dns-item">• AhaDNS (آمریکا، هلند، لهستان، هند، سنگاپور، استرالیا)</div>
-            <div class="dns-item">• BlahDNS (فنلاند، ژاپن، آلمان، سنگاپور)</div>
-            <div class="dns-item">• Pi-DNS (اروپا، آمریکا)</div>
-            <div class="dns-item">• و 60+ سرور دیگر با پوشش جهانی...</div>
+            <div class="dns-item">• AhaDNS (US, Netherlands, Poland, India, Singapore, Australia)</div>
+            <div class="dns-item">• BlahDNS (Finland, Japan, Germany, Singapore)</div>
+            <div class="dns-item">• Pi-DNS (Europe, US)</div>
+            <div class="dns-item">• 60+ more globally distributed servers...</div>
         </div>
 
         <div class="info-box">
-            <strong>✅ این DoH Proxy چه کارهایی انجام می‌دهد:</strong><br><br>
-            • <span class="success-highlight">رمزنگاری کامل درخواست‌های DNS</span> - درخواست‌های شما از طریق HTTPS رمزنگاری می‌شوند<br>
-            • <span class="success-highlight">دور زدن DNS Poisoning</span> - از دستکاری پاسخ‌های DNS جلوگیری می‌کند<br>
-            • <span class="success-highlight">باز کردن وب‌سایت‌های فیلتر شده با DNS</span> - اگر سایتی فقط در لایه DNS مسدود شده باشد، با این DoH قابل دسترسی می‌شود<br>
-            • <span class="success-highlight">افزایش حریم خصوصی</span> - ISP نمی‌تواند ببیند به چه دامنه‌هایی Query می‌زنید<br>
-            • <span class="success-highlight">بهبود امنیت</span> - از حملات Man-in-the-Middle در لایه DNS جلوگیری می‌کند<br>
-            • <span class="success-highlight">سرعت بالاتر</span> - با Racing Mode، Circuit Breaker و Smart Caching سرعت بهینه را دریافت می‌کنید
+            <strong>✅ What this DoH proxy does:</strong><br><br>
+            • <span class="success-highlight">Fully encrypts DNS requests</span> - your DNS queries are sent over HTTPS<br>
+            • <span class="success-highlight">Bypasses DNS poisoning</span> - helps prevent DNS response tampering<br>
+            • <span class="success-highlight">Opens DNS-filtered websites</span> - works when a site is blocked only at the DNS layer<br>
+            • <span class="success-highlight">Improves privacy</span> - your ISP cannot see the domains you query<br>
+            • <span class="success-highlight">Improves security</span> - helps prevent DNS-layer man-in-the-middle attacks<br>
+            • <span class="success-highlight">Improves speed</span> - Racing Mode, Circuit Breaker, and Smart Caching select faster paths
         </div>
 
         <div class="warning-box">
-            <strong>💡 درک انواع فیلترینگ:</strong><br><br>
-            فیلترینگ در شبکه در لایه‌های مختلف انجام می‌شود:<br><br>
+            <strong>💡 Understanding filtering types:</strong><br><br>
+            Network filtering can happen at several layers:<br><br>
             
-            <strong>1. DNS Filtering (فیلترینگ DNS):</strong><br>
-            • سایت در سطح DNS مسدود می‌شود<br>
-            • <span class="success-highlight">✓ این DoH Proxy این نوع فیلترینگ را دور می‌زند</span><br>
-            • مثال: بسیاری از وب‌سایت‌ها در کشورهای مختلف<br><br>
+            <strong>1. DNS Filtering:</strong><br>
+            • A site is blocked at the DNS level<br>
+            • <span class="success-highlight">✓ This DoH proxy can bypass this type of filtering</span><br>
+            • Example: many websites in different countries<br><br>
             
-            <strong>2. SNI Filtering (فیلترینگ SNI):</strong><br>
-            • سایت بر اساس Server Name Indication مسدود می‌شود<br>
-            • ✗ این DoH به تنهایی کافی نیست (نیاز به ECH یا ابزار اضافی)<br><br>
+            <strong>2. SNI Filtering:</strong><br>
+            • A site is blocked by Server Name Indication<br>
+            • ✗ DoH alone is not enough; ECH or additional tooling is needed<br><br>
             
-            <strong>3. IP Blocking (مسدودسازی IP):</strong><br>
-            • آدرس IP سرور مستقیماً مسدود می‌شود<br>
-            • ✗ این DoH به تنهایی کافی نیست (نیاز به VPN)<br><br>
+            <strong>3. IP Blocking:</strong><br>
+            • The server IP address is blocked directly<br>
+            • ✗ DoH alone is not enough; a VPN may be required<br><br>
             
             <strong>4. Deep Packet Inspection - DPI:</strong><br>
-            • بررسی عمیق محتوای بسته‌های شبکه<br>
-            • ✗ این DoH به تنهایی کافی نیست (نیاز به VPN یا پروکسی پیشرفته)<br><br>
+            • Network packets are inspected deeply<br>
+            • ✗ DoH alone is not enough; a VPN or advanced proxy may be required<br><br>
             
-            <strong>نتیجه:</strong> اگر سایت مورد نظر شما فقط با DNS فیلتر شده، این DoH کافی است. اگر از روش‌های دیگر فیلتر شده، به VPN نیاز دارید.
+            <strong>Bottom line:</strong> this DoH is enough when the target site is only DNS-filtered. Other filtering methods may require a VPN or additional tools.
         </div>
 
-        <h2>📱 نحوه استفاده:</h2>
+        <h2>📱 How to Use:</h2>
         
         <div class="usage-card">
-            <h3>🌐 مرورگرها (Firefox, Chrome, Edge, Brave)</h3>
-            <p>بروید به تنظیمات مرورگر → بخش Privacy یا Security → DNS over HTTPS → انتخاب Custom Provider و آدرس بالا را وارد کنید.</p>
-            <p><strong>فعال‌سازی ECH در Firefox:</strong><br>
-            1. در آدرس‌بار تایپ کنید: about:config<br>
-            2. جستجو کنید: network.dns.echconfig.enabled<br>
-            3. مقدار را روی true قرار دهید</p>
-            <p>با این تنظیمات، بسیاری از سایت‌های فیلتر شده با DNS قابل دسترسی می‌شوند.</p>
+            <h3>🌐 Browsers (Firefox, Chrome, Edge, Brave)</h3>
+            <p>Open browser settings → Privacy or Security → DNS over HTTPS → choose Custom Provider and enter the address above.</p>
+            <p><strong>Enable ECH in Firefox:</strong><br>
+            1. Type about:config in the address bar<br>
+            2. Search for network.dns.echconfig.enabled<br>
+            3. Set it to true</p>
+            <p>With these settings, many DNS-filtered sites become accessible.</p>
         </div>
 
         <div class="usage-card">
-            <h3>📱 اپلیکیشن Intra (اندروید)</h3>
-            <p>1. اپلیکیشن Intra را از Google Play نصب کنید<br>
-            2. اپلیکیشن را باز کنید<br>
-            3. روی گزینه "Configure custom server URL" بزنید<br>
-            4. آدرس زیر را در قسمت Custom DNS over HTTPS server URL وارد کنید:</p>
+            <h3>📱 Intra App (Android)</h3>
+            <p>1. Install Intra from Google Play<br>
+            2. Open the app<br>
+            3. Tap "Configure custom server URL"<br>
+            4. Enter this address in the Custom DNS over HTTPS server URL field:</p>
             <div class="url-container">
                 <div class="url-box">${workerUrl}</div>
             </div>
-            <p>5. دکمه ON را فعال کنید</p>
-            <p>این تنظیم DNS شما را رمزنگاری می‌کند و سایت‌هایی که فقط با DNS فیلتر شده‌اند را باز می‌کند.</p>
+            <p>5. Turn the ON switch on</p>
+            <p>This encrypts your DNS and opens sites that are blocked only by DNS filtering.</p>
         </div>
 
         <div class="usage-card">
-            <h3>🍎 iOS, iPadOS و macOS</h3>
-            <p>برای استفاده در دستگاه‌های اپل، کافی است پروفایل شخصی خود را دانلود و نصب کنید:</p>
-            <a href="${appleProfileUrl}" class="download-btn">🍎 دانلود پروفایل iOS/macOS</a>
+            <h3>🍎 iOS, iPadOS, and macOS</h3>
+            <p>For Apple devices, download and install your personal profile:</p>
+            <a href="${appleProfileUrl}" class="download-btn">🍎 Download iOS/macOS Profile</a>
             <br><br>
-            <p><strong>نحوه نصب:</strong><br>
-            • <strong>iOS/iPadOS:</strong> فایل را با Safari دانلود کنید → Settings → General → VPN, DNS & Device Management → Downloaded Profile → Install<br>
-            • <strong>macOS:</strong> فایل را دانلود کنید → System Settings → Privacy & Security → Profiles → نصب پروفایل</p>
-            <p>پس از نصب، DNS همه اپلیکیشن‌های شما رمزنگاری می‌شود.</p>
+            <p><strong>Installation:</strong><br>
+            • <strong>iOS/iPadOS:</strong> download the file with Safari → Settings → General → VPN, DNS & Device Management → Downloaded Profile → Install<br>
+            • <strong>macOS:</strong> download the file → System Settings → Privacy & Security → Profiles → install the profile</p>
+            <p>After installation, DNS from your apps will be encrypted.</p>
         </div>
 
         <div class="usage-card">
-            <h3>🔧 کلاینت‌های Xray - کانفیگ ساده (v2rayNG و مشابه)</h3>
-            <p>برای استفاده در کلاینت‌های مبتنی بر Xray، می‌توانید از کانفیگ زیر استفاده کنید:</p>
+            <h3>🔧 Xray Clients - Simple Config (v2rayNG and similar)</h3>
+            <p>For Xray-based clients, you can use this config:</p>
             <div class="code-box" id="xrayConfig">{
   "remarks": "🛡️ DoH Proxy Pro",
   "dns": {
@@ -2046,14 +2046,14 @@ async function handleRequest(request) {
     ]
   }
 }</div>
-            <button class="copy-btn" onclick="copyToClipboard('xrayConfig')">📋 کپی کانفیگ Xray</button>
+            <button class="copy-btn" onclick="copyToClipboard('xrayConfig')">📋 Copy Xray Config</button>
             <br><br>
-            <p><strong>نکته:</strong> این کانفیگ DNS شما را امن می‌کند و سایت‌های فیلتر شده با DNS را باز می‌کند.</p>
+            <p><strong>Note:</strong> this config secures your DNS and opens sites that are blocked only by DNS filtering.</p>
         </div>
 
         <div class="usage-card">
-            <h3>🚀 کلاینت‌های Xray - کانفیگ پیشرفته با Fragment (توصیه می‌شود)</h3>
-            <p>این کانفیگ علاوه بر DoH دارای قابلیت Fragment است که به دور زدن فیلترینگ‌های پیشرفته‌تر کمک می‌کند:</p>
+            <h3>🚀 Xray Clients - Advanced Fragment Config (Recommended)</h3>
+            <p>This config adds Fragment support alongside DoH to help with more advanced filtering:</p>
             <div class="code-box" id="xrayFragmentConfig">{
   "remarks": "🛡️ DoH Proxy Pro + Fragment",
   "log": {
@@ -2239,87 +2239,87 @@ async function handleRequest(request) {
   },
   "stats": {}
 }</div>
-            <button class="copy-btn" onclick="copyToClipboard('xrayFragmentConfig')">📋 کپی کانفیگ Fragment</button>
+            <button class="copy-btn" onclick="copyToClipboard('xrayFragmentConfig')">📋 Copy Fragment Config</button>
             <br><br>
-            <p><strong>مزایای کانفیگ Fragment:</strong><br>
-            • قابلیت Fragment برای دور زدن DPI<br>
-            • تکه‌تکه کردن بسته‌های TLS Hello<br>
-            • افزایش قابلیت دور زدن فیلترینگ‌های پیشرفته</p>
+            <p><strong>Fragment config benefits:</strong><br>
+            • Fragment support for bypassing DPI<br>
+            • Splits TLS Hello packets<br>
+            • Improves resistance to advanced filtering</p>
         </div>
 
 
         <div class="usage-card">
-            <h3>💻 ویندوز 10/11</h3>
-            <p>Settings → Network & Internet → Properties → DNS server assignment → Edit → Preferred DNS encryption: Encrypted only (DNS over HTTPS) و آدرس بالا را وارد کنید.</p>
+            <h3>💻 Windows 10/11</h3>
+            <p>Settings → Network & Internet → Properties → DNS server assignment → Edit → Preferred DNS encryption: Encrypted only (DNS over HTTPS), then enter the address above.</p>
         </div>
 
         <div class="usage-card">
-            <h3>🐧 لینوکس</h3>
-            <p><strong>استفاده از systemd-resolved:</strong><br>
-            1. ویرایش فایل تنظیمات:<br>
+            <h3>🐧 Linux</h3>
+            <p><strong>Using systemd-resolved:</strong><br>
+            1. Edit the configuration file:<br>
             <code style="background: #0d1117; padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 5px 0;">sudo nano /etc/systemd/resolved.conf</code></p>
-            <p>2. اضافه کردن این خطوط:<br>
+            <p>2. Add these lines:<br>
             <code style="background: #0d1117; padding: 10px; border-radius: 4px; display: block; margin: 10px 0;">[Resolve]<br>DNS=${workerUrl}<br>DNSOverTLS=yes</code></p>
-            <p>3. ری‌استارت سرویس:<br>
+            <p>3. Restart the service:<br>
             <code style="background: #0d1117; padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 5px 0;">sudo systemctl restart systemd-resolved</code></p>
         </div>
 
         <div class="usage-card">
-            <h3>🔧 روتر</h3>
-            <p>بسته به مدل روتر، ممکن است پشتیبانی از DoH داشته باشد. به تنظیمات DNS روتر خود مراجعه کنید. با تنظیم DoH در روتر، تمام دستگاه‌های متصل به شبکه از DNS رمزنگاری شده استفاده می‌کنند.</p>
+            <h3>🔧 Router</h3>
+            <p>Depending on your router model, DoH may be supported. Check your router DNS settings. Configuring DoH on the router encrypts DNS for all devices connected to the network.</p>
         </div>
 
-        <h2>🛡️ توصیه‌های امنیتی:</h2>
+        <h2>🛡️ Security Recommendations:</h2>
         <div class="info-box">
-            <strong>برای حداکثر امنیت و دسترسی:</strong><br><br>
-            <strong>سناریو 1 - فقط فیلترینگ DNS:</strong><br>
-            ✓ از این DoH Proxy استفاده کنید<br>
-            ✓ بسیاری از سایت‌ها قابل دسترسی می‌شوند<br><br>
+            <strong>For maximum security and access:</strong><br><br>
+            <strong>Scenario 1 - DNS filtering only:</strong><br>
+            ✓ Use this DoH proxy<br>
+            ✓ Many sites become accessible<br><br>
             
-            <strong>سناریو 2 - فیلترینگ پیشرفته‌تر:</strong><br>
-            ✓ از این DoH Proxy استفاده کنید<br>
-            ✓ ECH را در مرورگر فعال کنید<br>
-            ✓ از کانفیگ Fragment در Xray استفاده کنید<br>
-            ✓ از VPN برای لایه‌های دیگر استفاده کنید<br><br>
+            <strong>Scenario 2 - More advanced filtering:</strong><br>
+            ✓ Use this DoH proxy<br>
+            ✓ Enable ECH in your browser<br>
+            ✓ Use the Fragment config in Xray<br>
+            ✓ Use a VPN for other layers when needed<br><br>
             
-            <strong>نکات عمومی:</strong><br>
-            • از مرورگرهای به‌روز استفاده کنید<br>
-            • HTTPS را همیشه فعال نگه دارید<br>
-            • از نرم‌افزارهای امنیتی معتبر استفاده کنید<br>
-            • رمزهای عبور قوی استفاده کنید
+            <strong>General tips:</strong><br>
+            • Use up-to-date browsers<br>
+            • Keep HTTPS enabled<br>
+            • Use reputable security software<br>
+            • Use strong passwords
         </div>
 
-        <h2>❓ سوالات متداول:</h2>
+        <h2>❓ FAQ:</h2>
         <div class="info-box">
-            <strong>Q: آیا با این DoH می‌توانم به سایت‌های فیلتر شده دسترسی داشته باشم؟</strong><br>
-            A: بله، اگر سایت فقط با DNS فیلتر شده باشد. اگر از روش‌های دیگر (IP blocking, DPI) فیلتر شده، به VPN نیاز دارید.<br><br>
+            <strong>Q: Can I access filtered sites with this DoH?</strong><br>
+            A: Yes, if the site is filtered only by DNS. If it is filtered by other methods like IP blocking or DPI, you may need a VPN.<br><br>
             
-            <strong>Q: Fragment چیست و چه کمکی می‌کند؟</strong><br>
-            A: Fragment یک تکنیک ضد فیلترینگ است که بسته‌های TLS Hello را تکه‌تکه می‌کند و از شناسایی توسط DPI جلوگیری می‌کند. استفاده از کانفیگ Fragment در کنار DoH می‌تواند به دور زدن فیلترینگ‌های پیشرفته‌تر کمک کند.<br><br>
+            <strong>Q: What is Fragment and how does it help?</strong><br>
+            A: Fragment is an anti-filtering technique that splits TLS Hello packets and makes DPI detection harder. Using Fragment alongside DoH can help against more advanced filtering.<br><br>
             
-            <strong>Q: ECH چیست و چگونه کمک می‌کند؟</strong><br>
-            A: ECH یا Encrypted Client Hello تکنیکی است که SNI را رمزنگاری می‌کند و از فیلترینگ مبتنی بر SNI جلوگیری می‌کند. برای استفاده باید هم مرورگر و هم سرور از آن پشتیبانی کنند.<br><br>
+            <strong>Q: What is ECH and how does it help?</strong><br>
+            A: ECH, or Encrypted Client Hello, encrypts SNI and helps prevent SNI-based filtering. Both the browser and server must support it.<br><br>
             
-            <strong>Q: این DoH چه تفاوتی با 1.1.1.1 دارد؟</strong><br>
-            A: این DoH Proxy شخصی شماست که روی Cloudflare Worker اجرا می‌شود و تکنیک‌های پیشرفته ضد سانسور دارد (Parallel Racing با 10 سرور، Circuit Breaker، Geo-selection، یادگیری تطبیقی، DNS Padding، QNAME Minimization، Negative Caching، Adaptive Timeouts و 15+ قابلیت دیگر). در نهایت از همان سرورهای DNS معتبر استفاده می‌کند ولی با قابلیت‌های بسیار بیشتر.<br><br>
+            <strong>Q: How is this DoH different from 1.1.1.1?</strong><br>
+            A: This is your personal DoH proxy running on Cloudflare Workers, with advanced anti-censorship techniques such as 10-server Parallel Racing, Circuit Breaker, geo-selection, adaptive learning, DNS Padding, QNAME Minimization, Negative Caching, Adaptive Timeouts, and 15+ other capabilities. It still uses trusted DNS providers, but with much more control.<br><br>
             
-            <strong>Q: آیا این سرویس رایگان است؟</strong><br>
-            A: بله، اگر در محدوده رایگان Cloudflare Workers باشید (100,000 request در روز) کاملاً رایگان است.<br><br>
+            <strong>Q: Is this service free?</strong><br>
+            A: Yes, as long as you stay within the Cloudflare Workers free tier, such as 100,000 requests per day.<br><br>
             
-            <strong>Q: آیا استفاده از این DoH سرعت را کاهش می‌دهد؟</strong><br>
-            A: خیر، بلکه ممکن است سرعت را بهبود بخشد چون از Cache هوشمند استفاده می‌کند و با Racing Mode اولین پاسخ سریع را دریافت می‌کنید.<br><br>
+            <strong>Q: Will using this DoH reduce speed?</strong><br>
+            A: Usually no. It may improve speed because Smart Caching and Racing Mode use the first fast response.<br><br>
             
-            <strong>Q: چه تفاوتی بین کانفیگ ساده و کانفیگ Fragment وجود دارد؟</strong><br>
-            A: کانفیگ ساده فقط DoH را فعال می‌کند و برای دور زدن فیلترینگ DNS کافی است. کانفیگ Fragment علاوه بر DoH، قابلیت Fragment را هم دارد که به دور زدن فیلترینگ‌های پیشرفته‌تر (DPI) کمک می‌کند. برای حداکثر امنیت، استفاده از کانفیگ Fragment توصیه می‌شود.<br><br>
+            <strong>Q: What is the difference between the simple config and the Fragment config?</strong><br>
+            A: The simple config only enables DoH and is enough for DNS filtering. The Fragment config adds Fragment support, which helps with more advanced DPI filtering. For maximum resilience, the Fragment config is recommended.<br><br>
             
-            <strong>Q: آیا کسی می‌تواند ببیند من از این سرویس استفاده می‌کنم؟</strong><br>
-            A: درخواست‌های DNS شما رمزنگاری شده و ISP نمی‌تواند محتوای آن‌ها را ببیند. فقط می‌تواند ببیند که به سرور Cloudflare متصل هستید.<br><br>
+            <strong>Q: Can anyone see that I use this service?</strong><br>
+            A: Your DNS requests are encrypted, so your ISP cannot see their contents. It can only see that you connect to Cloudflare.<br><br>
             
-            <strong>Q: تکنولوژی Parallel Racing چگونه کار می‌کند؟</strong><br>
-            A: این سیستم همزمان به 10 سرور DNS برتر (با امتیازدهی بر اساس منطقه جغرافیایی، سرعت، سلامت و قابلیت اطمینان) درخواست می‌فرستد و اولین پاسخ سریع را قبول می‌کند. این باعث کاهش latency و افزایش قابلیت اطمینان می‌شود.<br><br>
+            <strong>Q: How does Parallel Racing work?</strong><br>
+            A: The system sends each query to the top 10 DNS servers at the same time, scored by region, speed, health, and reliability, then accepts the first fast response. This reduces latency and improves reliability.<br><br>
             
-            <strong>Q: Request Coalescing چیست؟</strong><br>
-            A: وقتی چند کاربر یا برنامه در یک لحظه برای یک دامنه یکسان Query می‌زنند، به جای ارسال چند درخواست جداگانه به upstream، Worker یک درخواست ارسال می‌کند و پاسخ را بین همه به اشتراک می‌گذارد. این باعث کاهش بار سرور و کاهش latency می‌شود.<br><br>
+            <strong>Q: What is Request Coalescing?</strong><br>
+            A: When multiple users or apps query the same domain at the same moment, the Worker sends one upstream request and shares the response with all waiting callers. This reduces server load and latency.<br><br>
             
         </div>
 
@@ -2339,7 +2339,7 @@ async function handleRequest(request) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
                     btn.classList.add('copied');
-                    btn.innerHTML = '✓ کپی شد!';
+                    btn.innerHTML = '✓ Copied!';
                     setTimeout(() => {
                         btn.classList.remove('copied');
                         btn.innerHTML = originalHTML;
@@ -2363,13 +2363,13 @@ async function handleRequest(request) {
             try {
                 document.execCommand('copy');
                 btn.classList.add('copied');
-                btn.innerHTML = '✓ کپی شد!';
+                btn.innerHTML = '✓ Copied!';
                 setTimeout(() => {
                     btn.classList.remove('copied');
                     btn.innerHTML = originalHTML;
                 }, 2000);
             } catch (err) {
-                btn.innerHTML = '❌ خطا در کپی';
+                btn.innerHTML = '❌ Copy failed';
                 setTimeout(() => {
                     btn.innerHTML = originalHTML;
                 }, 2000);
