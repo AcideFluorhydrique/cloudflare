@@ -1,260 +1,260 @@
 # 🚀 DoH Proxy Pro - Cloudflare
 
-یک DoH (DNS over HTTPS) Proxy قدرتمند با تکنولوژی Parallel Racing، Circuit Breaker، Geo-selection و یادگیری تطبیقی - کاملاً رایگان!
+A powerful DoH (DNS over HTTPS) Proxy with Parallel Racing technology, Circuit Breaker, Geo-selection, and adaptive learning - completely free!
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange.svg)](https://workers.cloudflare.com/)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-green.svg)](https://pages.cloudflare.com/)
 
-## 📖 درباره پروژه
+## 📖 About the Project
 
-DoH Proxy Pro یک سرویس DNS over HTTPS پیشرفته است که با استفاده از Cloudflare Workers و Pages ساخته شده و امکان رمزنگاری کامل DNS queries شما را با بالاترین سطح امنیت و سرعت فراهم می‌کند.
+DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Workers and Pages that lets you fully encrypt your DNS queries with the highest level of security and speed.
 
-### ✨ ویژگی‌های پیشرفته
+### ✨ Advanced Features
 
 #### 🎯 Parallel DNS Racing
-- همزمان به **10 سرور DNS برتر** درخواست می‌فرستد
-- اولین پاسخ سریع را قبول می‌کند
-- کاهش چشمگیر Latency
-- افزایش قابلیت اطمینان
+- Sends requests to the **top 10 DNS servers** simultaneously
+- Accepts the first fast response
+- Dramatically reduces latency
+- Increases reliability
 
 #### 🔌 Circuit Breaker Pattern
-- شناسایی خودکار سرورهای ناسالم
-- قطع موقت سرورهای با بیش از 5 شکست متوالی
-- بازیابی خودکار بعد از 60 ثانیه
-- سه حالت: Closed, Open, Half-Open
+- Automatically detects unhealthy servers
+- Temporarily cuts off servers with more than 5 consecutive failures
+- Automatic recovery after 60 seconds
+- Three states: Closed, Open, Half-Open
 
 #### 🌍 Geo-based Provider Selection
-- شناسایی خودکار موقعیت جغرافیایی کاربر
-- اولویت‌دهی به سرورهای نزدیک (کاهش Latency)
-- پشتیبانی از 6 منطقه: NA, EU, Asia, Oceania, SA, Global
-- وزن 15% در امتیازدهی نهایی
+- Automatically detects the user's geographic location
+- Prioritizes nearby servers (reduces latency)
+- Supports 6 regions: NA, EU, Asia, Oceania, SA, Global
+- Weighted at 15% in the final score
 
 #### 🧠 AI Adaptive Learning
-- یادگیری تطبیقی از عملکرد سرورها
-- انتخاب هوشمند بر اساس تاریخچه
-- بهینه‌سازی خودکار در طول زمان
-- امتیازدهی پویا: **35% سلامت + 30% سرعت + 20% قابلیت اطمینان + 15% منطقه جغرافیایی**
+- Adaptive learning from server performance
+- Intelligent selection based on history
+- Automatic optimization over time
+- Dynamic scoring: **35% health + 30% speed + 20% reliability + 15% geographic region**
 
-#### 🌐 پشتیبانی از بیش از 220 سرور DNS معتبر
+#### 🌐 Support for more than 220 trusted DNS servers
 - Cloudflare, Google, Quad9, OpenDNS
 - AdGuard, NextDNS, Mullvad
-- AhaDNS (آمریکا، هلند، لهستان، هند، سنگاپور، استرالیا)
-- BlahDNS (فنلاند، ژاپن، آلمان، سنگاپور)
-- Pi-DNS (اروپا، آمریکا)
-- DNScrypt Servers (فرانسه، هلند، آمریکا، سنگاپور، استرالیا، ژاپن)
-- و ده‌ها سرور دیگر با پوشش جهانی...
+- AhaDNS (US, Netherlands, Poland, India, Singapore, Australia)
+- BlahDNS (Finland, Japan, Germany, Singapore)
+- Pi-DNS (Europe, US)
+- DNScrypt Servers (France, Netherlands, US, Singapore, Australia, Japan)
+- And dozens more servers with global coverage...
 
-#### 🔒 حریم خصوصی و امنیت پیشرفته
-- **DNS Padding (RFC 8467)**: پیاده‌سازی استاندارد و واقعی با OPT Record کامل برای جلوگیری از Traffic Analysis
-- **QNAME Minimization**: حداقل‌سازی اطلاعات در Query ها
-- **ECS Stripping پیشرفته**: پارس و حذف واقعی EDNS Client Subnet از OPT Record برای جلوگیری از نشت IP
-- **Enhanced Header Randomization**: تصادفی‌سازی پیشرفته Headers (X-Request-ID, X-Client-Version, Accept-Language, Sec-CH-UA)
-- **Random Header Ordering**: ترتیب تصادفی Headers برای ضد Fingerprinting
+#### 🔒 Advanced Privacy and Security
+- **DNS Padding (RFC 8467)**: A real, standard-compliant implementation with a complete OPT Record to prevent traffic analysis
+- **QNAME Minimization**: Minimizes the information contained in queries
+- **Advanced ECS Stripping**: Genuinely parses and removes EDNS Client Subnet from the OPT Record to prevent IP leakage
+- **Enhanced Header Randomization**: Advanced randomization of headers (X-Request-ID, X-Client-Version, Accept-Language, Sec-CH-UA)
+- **Random Header Ordering**: Randomized header order for anti-fingerprinting
 
-#### 🛡️ ضد سانسور و مدیریت خطا
-- **Health Check** خودکار هر 90 ثانیه
-- **Circuit Breaker** برای مدیریت خرابی
-- **Intelligent Fallback** در صورت شکست Racing
-- **Domain Fronting** Simulation
-- **Random Delay** (5-100ms) برای ضد DPI
-- **Enhanced Decoy Requests** با احتمال 25% و 20 دامنه متنوع برای گمراه‌سازی سیستم‌های نظارتی
-- **Request Coalescing**: ادغام هوشمند درخواست‌های تکراری همزمان برای کاهش بار و latency
+#### 🛡️ Anti-Censorship and Error Handling
+- Automatic **Health Check** every 90 seconds
+- **Circuit Breaker** for failure management
+- **Intelligent Fallback** when racing fails
+- **Domain Fronting** simulation
+- **Random Delay** (5-100ms) for anti-DPI
+- **Enhanced Decoy Requests** with 25% probability and 20 varied domains to mislead monitoring systems
+- **Request Coalescing**: Intelligently merges duplicate concurrent requests to reduce load and latency
 
-#### ⚡ عملکرد و کارایی بالا
-- **Smart LRU Cache** با TTL خودکار و مدیریت هوشمند (8000 entries)
-- **Negative Caching** برای NXDOMAIN responses (300s TTL, 2000 entries)
-- **Adaptive Timeouts** بر اساس میانگین زمان پاسخ هر سرور
-- **Load Balancing** پویا با وزن‌دهی منطقه‌ای
-- **Concurrent Request Management** با محدودیت 150 درخواست همزمان
-- **Advanced Rate Limiting** (200 درخواست در دقیقه به ازای هر IP)
-- **FNV-1a Cache Key**: الگوریتم hash قوی‌تر برای کلید Cache که Transaction ID را نادیده می‌گیرد
-- استفاده از شبکه جهانی Cloudflare CDN
+#### ⚡ High Performance and Efficiency
+- **Smart LRU Cache** with automatic TTL and intelligent management (8000 entries)
+- **Negative Caching** for NXDOMAIN responses (300s TTL, 2000 entries)
+- **Adaptive Timeouts** based on each server's average response time
+- Dynamic **Load Balancing** with regional weighting
+- **Concurrent Request Management** with a limit of 150 simultaneous requests
+- **Advanced Rate Limiting** (200 requests per minute per IP)
+- **FNV-1a Cache Key**: A stronger hash algorithm for the cache key that ignores the Transaction ID
+- Uses Cloudflare's global CDN network
 
-#### 🌐 سازگاری پیشرفته
-- **CORS Support**: پشتیبانی کامل از درخواست‌های Cross-Origin برای استفاده مستقیم از مرورگر
-- **JSON DoH API**: پشتیبانی از فرمت `application/dns-json` و پارامتر `?name=domain&type=A` برای سازگاری با طیف وسیع‌تری از کلاینت‌ها
+#### 🌐 Advanced Compatibility
+- **CORS Support**: Full support for cross-origin requests for direct use from the browser
+- **JSON DoH API**: Supports the `application/dns-json` format and the `?name=domain&type=A` parameter for compatibility with a wider range of clients
 
-#### 📊 مانیتورینگ و آمار
+#### 📊 Monitoring and Statistics
 - **Real-time Stats Page**
-- نمایش Top 15 سرورهای فعال
-- آمار زنده: تعداد سرورها، سرورهای سالم، میانگین سلامت، تعداد کل درخواست‌ها
-- نمایش درصد موفقیت، زمان پاسخ، و سلامت هر سرور
-- Responsive Design برای موبایل
-- جدول اسکرول‌پذیر با Sticky Header
+- Displays the Top 15 active servers
+- Live stats: number of servers, healthy servers, average health, total requests
+- Displays success rate, response time, and health for each server
+- Responsive design for mobile
+- Scrollable table with a sticky header
 
-## 🎭 دو روش استقرار
+## 🎭 Two Deployment Methods
 
 ### 1️⃣ Cloudflare Workers
 
-**مناسب برای:** استقرار سریع و مستقل
+**Suitable for:** Fast, standalone deployment
 
-**مزایا:**
-- راه‌اندازی سریع‌تر
-- مدیریت آسان‌تر
-- بدون نیاز به GitHub
+**Advantages:**
+- Faster setup
+- Easier management
+- No GitHub required
 
-**فایل مورد نیاز:** [`worker.js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/manual-worker/worker.js)
+**Required file:** [`worker.js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/manual-worker/worker.js)
 
 ### 2️⃣ Cloudflare Pages
 
-**مناسب برای:** اتصال به GitHub و آپدیت خودکار
+**Suitable for:** Connecting to GitHub with automatic updates
 
-**مزایا:**
-- اتصال مستقیم به GitHub
-- آپدیت خودکار با هر Push
-- قابلیت CI/CD
+**Advantages:**
+- Direct connection to GitHub
+- Automatic updates on every push
+- CI/CD capability
 
-**فایل مورد نیاز:** [`[[path]].js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/functions/%5B%5Bpath%5D%5D.js) در پوشه `functions/`
+**Required file:** [`[[path]].js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/functions/%5B%5Bpath%5D%5D.js) in the `functions/` folder
 
-## 🚀 راهنمای نصب
+## 🚀 Installation Guide
 
-### روش 1: Cloudflare [Workers](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/manual-worker/worker.js) (توصیه شده برای مبتدیان)
+### Method 1: Cloudflare [Workers](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/manual-worker/worker.js) (recommended for beginners)
 
-#### مرحله 1: ایجاد Worker
+#### Step 1: Create a Worker
 
-1. به [dash.cloudflare.com](https://dash.cloudflare.com) بروید و وارد شوید
-2. از منوی سمت چپ **Workers & Pages** را انتخاب کنید
-3. روی **Create Application** کلیک کنید
-4. **Create Worker** را انتخاب کنید
-5. یک نام برای Worker انتخاب کنید (مثلاً `my-doh-proxy`)
-6. روی **Deploy** کلیک کنید
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) and sign in
+2. Select **Workers & Pages** from the left menu
+3. Click **Create Application**
+4. Select **Create Worker**
+5. Choose a name for the Worker (e.g. `my-doh-proxy`)
+6. Click **Deploy**
 
-#### مرحله 2: کپی کردن کد
+#### Step 2: Copy the Code
 
-1. روی **Edit Code** کلیک کنید
-2. تمام کد پیش‌فرض را پاک کنید
-3. محتوای فایل [`worker.js`](https://github.com/4n0nymou3/YOUR-REPO-NAME/blob/main/manual-worker/worker.js) را کپی کرده و جایگذاری کنید
-4. روی **Save and Deploy** کلیک کنید
+1. Click **Edit Code**
+2. Delete all the default code
+3. Copy the contents of [`worker.js`](https://github.com/4n0nymou3/YOUR-REPO-NAME/blob/main/manual-worker/worker.js) and paste it in
+4. Click **Save and Deploy**
 
-#### مرحله 3: دریافت URL
+#### Step 3: Get the URL
 
-بعد از Deploy، URL سرویس شما:
+After deploying, your service URL is:
 
 ```
 https://your-worker-name.your-subdomain.workers.dev/dns-query
 ```
 
-### روش 2: Cloudflare [Pages](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/functions/%5B%5Bpath%5D%5D.js) (توصیه شده برای توسعه‌دهندگان)
+### Method 2: Cloudflare [Pages](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/functions/%5B%5Bpath%5D%5D.js) (recommended for developers)
 
-#### مرحله 1: آماده‌سازی Repository
+#### Step 1: Prepare the Repository
 
-1. این ریپازیتوری را Fork کنید یا ریپازیتوری جدیدی بسازید
-2. ساختار پوشه‌ها:
+1. Fork this repository or create a new one
+2. Folder structure:
 ```
 your-repository/
 ├── functions/
 │   └── [[path]].js
 └── README.md
 ```
-3. فایل [`[[path]].js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/functions/%5B%5Bpath%5D%5D.js) را در پوشه `functions/` قرار دهید
+3. Place the [`[[path]].js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/functions/%5B%5Bpath%5D%5D.js) file in the `functions/` folder
 
-#### مرحله 2: اتصال به Cloudflare Pages
+#### Step 2: Connect to Cloudflare Pages
 
-1. به [dash.cloudflare.com](https://dash.cloudflare.com) بروید و وارد شوید
-2. از منوی سمت چپ **Workers & Pages** را انتخاب کنید
-3. روی **Create Application** کلیک کنید
-4. **Pages** را انتخاب کنید
-5. روی **Connect to Git** کلیک کنید
-6. ریپازیتوری خود را انتخاب کنید
-7. در Build settings:
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) and sign in
+2. Select **Workers & Pages** from the left menu
+3. Click **Create Application**
+4. Select **Pages**
+5. Click **Connect to Git**
+6. Select your repository
+7. In Build settings:
    - Framework preset: **None**
-   - Build command: خالی بگذارید
-   - Build output directory: خالی بگذارید
-8. روی **Save and Deploy** کلیک کنید
+   - Build command: leave empty
+   - Build output directory: leave empty
+8. Click **Save and Deploy**
 
-#### مرحله 3: دریافت URL
+#### Step 3: Get the URL
 
-بعد از Deploy، URL سرویس شما:
+After deploying, your service URL is:
 
 ```
 https://your-page-name.pages.dev/dns-query
 ```
 
-## 📱 راهنمای استفاده
+## 📱 Usage Guide
 
-### 🌐 مرورگرها
+### 🌐 Browsers
 
 #### Firefox
 
 ```
 Settings → Privacy & Security → DNS over HTTPS
 → Choose provider: Custom
-→ URL را وارد کنید
+→ Enter the URL
 ```
 
-**فعال‌سازی ECH برای امنیت بیشتر:**
-1. در آدرس‌بار: `about:config`
-2. جستجو: `network.dns.echconfig.enabled`
-3. مقدار را روی `true` قرار دهید
+**Enable ECH for extra security:**
+1. In the address bar: `about:config`
+2. Search for: `network.dns.echconfig.enabled`
+3. Set the value to `true`
 
 #### Chrome / Edge / Brave
 
 ```
 Settings → Privacy and security → Security
 → Use secure DNS → Custom
-→ URL را وارد کنید
+→ Enter the URL
 ```
 
-### 📱 موبایل
+### 📱 Mobile
 
-#### Android (اپلیکیشن Intra)
+#### Android (Intra app)
 
-1. [Intra](https://play.google.com/store/apps/details?id=app.intra) را از Google Play نصب کنید
-2. اپلیکیشن را باز کنید
-3. روی **Configure custom server URL** بزنید
-4. URL خود را وارد کنید: `https://your-domain/dns-query`
-5. دکمه **ON** را فعال کنید
+1. Install [Intra](https://play.google.com/store/apps/details?id=app.intra) from Google Play
+2. Open the app
+3. Tap **Configure custom server URL**
+4. Enter your URL: `https://your-domain/dns-query`
+5. Turn on the **ON** switch
 
-#### iOS, iPadOS و macOS
+#### iOS, iPadOS, and macOS
 
-**دانلود خودکار پروفایل:**
+**Automatic profile download:**
 
-1. به آدرس سرویس خود بروید (بدون `/dns-query`)
-2. روی دکمه **🍎 دانلود پروفایل iOS/macOS** کلیک کنید
-3. فایل `.mobileconfig` دانلود می‌شود
+1. Go to your service address (without `/dns-query`)
+2. Click the **🍎 Download iOS/macOS Profile** button
+3. The `.mobileconfig` file is downloaded
 
-**نصب در iOS/iPadOS:**
+**Installing on iOS/iPadOS:**
 ```
-Safari → دانلود فایل
+Safari → download the file
 Settings → General → VPN, DNS & Device Management
 → Downloaded Profile → Install
 ```
 
-**نصب در macOS:**
+**Installing on macOS:**
 ```
-دانلود فایل
+Download the file
 System Settings → Privacy & Security → Profiles
-→ نصب پروفایل
+→ Install the profile
 ```
 
-### 🔧 کلاینت‌های Xray
+### 🔧 Xray Clients
 
-#### کانفیگ ساده (فقط DoH)
+#### Simple config (DoH only)
 
-برای استفاده از DoH در v2rayNG و کلاینت‌های مشابه:
+To use DoH in v2rayNG and similar clients:
 
-1. وارد صفحه اصلی سرویس شوید (بدون `/dns-query`)
-2. کانفیگ ساده را کپی کنید
-3. در کلاینت خود Import کنید
+1. Go to the service's main page (without `/dns-query`)
+2. Copy the simple config
+3. Import it into your client
 
-**قابلیت:** رمزنگاری DNS
+**Capability:** DNS encryption
 
-#### کانفیگ Fragment (توصیه می‌شود)
+#### Fragment config (recommended)
 
-برای دور زدن فیلترینگ‌های پیشرفته:
+To bypass more advanced filtering:
 
-1. وارد صفحه اصلی سرویس شوید
-2. کانفیگ Fragment را کپی کنید
-3. در کلاینت خود Import کنید
+1. Go to the service's main page
+2. Copy the Fragment config
+3. Import it into your client
 
-**قابلیت‌ها:**
-- رمزنگاری DNS
-- Fragment برای دور زدن DPI
-- تکه‌تکه کردن TLS Hello
-- پورت SOCKS (10808) و HTTP (10809)
+**Capabilities:**
+- DNS encryption
+- Fragment for bypassing DPI
+- Splitting the TLS Hello
+- SOCKS (10808) and HTTP (10809) ports
 
-### 💻 دسکتاپ
+### 💻 Desktop
 
 #### Windows 10/11
 
@@ -262,120 +262,120 @@ System Settings → Privacy & Security → Profiles
 Settings → Network & Internet → Properties
 → DNS server assignment → Edit
 → Preferred DNS encryption: Encrypted only (DNS over HTTPS)
-→ URL را وارد کنید
+→ Enter the URL
 ```
 
 #### Linux (systemd-resolved)
 
-1. ویرایش فایل تنظیمات:
+1. Edit the config file:
 ```bash
 sudo nano /etc/systemd/resolved.conf
 ```
 
-2. اضافه کردن این خطوط:
+2. Add these lines:
 ```ini
 [Resolve]
 DNS=https://your-domain/dns-query
 DNSOverTLS=yes
 ```
 
-3. ری‌استارت سرویس:
+3. Restart the service:
 ```bash
 sudo systemctl restart systemd-resolved
 ```
 
 #### macOS
 
-از روش iOS استفاده کنید (دانلود پروفایل)
+Use the iOS method (download the profile)
 
-### 🔧 روتر
+### 🔧 Router
 
-اگر روتر شما از DoH پشتیبانی می‌کند:
+If your router supports DoH:
 
 ```
-تنظیمات DNS → DoH/DNS over HTTPS
-→ URL سرویس خود را وارد کنید
+DNS settings → DoH/DNS over HTTPS
+→ Enter your service URL
 ```
 
-**مزیت:** تمام دستگاه‌های متصل به شبکه از DNS امن استفاده می‌کنند
+**Advantage:** Every device connected to the network uses secure DNS
 
-## 📊 مشاهده آمار زنده
+## 📊 Viewing Live Statistics
 
-برای مشاهده آمار Real-time سرورها:
+To view real-time server statistics:
 
 ```
 https://your-domain/stats
 ```
 
-**اطلاعات قابل مشاهده:**
-- تعداد کل سرورها (220+)
-- تعداد سرورهای سالم
-- میانگین سلامت کل سیستم
-- تعداد کل درخواست‌ها
-- جدول Top 15 سرور با:
-  - رتبه و نام سرور
-  - منطقه جغرافیایی
-  - درصد موفقیت
-  - زمان میانگین پاسخ
-  - سلامت (با نوار گرافیکی)
+**Information available:**
+- Total number of servers (220+)
+- Number of healthy servers
+- Average health of the whole system
+- Total number of requests
+- Top 15 server table with:
+  - Rank and server name
+  - Geographic region
+  - Success rate
+  - Average response time
+  - Health (with a graphical bar)
 
-## 🧪 تست سرویس
+## 🧪 Testing the Service
 
-### روش 1: مرورگر
+### Method 1: Browser
 
-به آدرس اصلی سرویس بروید (بدون `/dns-query`):
+Go to the service's main address (without `/dns-query`):
 
 ```
 https://your-domain
 ```
 
-اگر صفحه با badge سبز "Pro" و وضعیت "فعال و آماده به کار" نمایش داده شد، سرویس به درستی کار می‌کند.
+If the page displays with a green "Pro" badge and the status "Active and ready", the service is working correctly.
 
-### روش 2: صفحه آمار
+### Method 2: Stats Page
 
 ```
 https://your-domain/stats
 ```
 
-اطلاعات وضعیت سرورها، Cache و تعداد درخواست‌ها را نمایش می‌دهد.
+Displays server status, cache, and request-count information.
 
-### روش 3: cURL
+### Method 3: cURL
 
 ```bash
 curl -H 'accept: application/dns-json' \
   'https://your-domain/dns-query?name=google.com&type=A'
 ```
 
-## ⚙️ تنظیمات پیشرفته
+## ⚙️ Advanced Settings
 
-### تغییر تعداد سرورهای همزمان Racing
+### Changing the number of concurrent racing servers
 
 ```javascript
 const PARALLEL_RACING_COUNT = 10;
 ```
 
-### تغییر Timeout ها
+### Changing timeouts
 
 ```javascript
 const RACE_TIMEOUT = 4000;
 const FALLBACK_TIMEOUT = 3000;
 ```
 
-### تغییر Circuit Breaker
+### Changing the Circuit Breaker
 
 ```javascript
 const CIRCUIT_BREAKER_THRESHOLD = 5;
 const CIRCUIT_BREAKER_TIMEOUT = 60000;
 ```
 
-### تغییر Rate Limit
+### Changing the Rate Limit
 
 ```javascript
 const RATE_LIMIT_REQUESTS = 200;
 const RATE_LIMIT_WINDOW = 60000;
 ```
 
-### تغییر Cache TTL
+### Changing the Cache TTL
 
 ```javascript
 const DNS_CACHE_TTL_MIN = 60;
@@ -383,26 +383,26 @@ const DNS_CACHE_TTL_MAX = 3600;
 const DNS_CACHE_TTL_DEFAULT = 300;
 ```
 
-### تغییر Negative Cache TTL
+### Changing the Negative Cache TTL
 
 ```javascript
 const NEGATIVE_CACHE_TTL = 300;
 ```
 
-### تغییر احتمال Decoy Requests
+### Changing the Decoy Requests probability
 
 ```javascript
 const DECOY_REQUEST_PROBABILITY = 0.25;
 ```
 
-### تغییر Random Delay Range
+### Changing the Random Delay range
 
 ```javascript
 const RANDOM_DELAY_MIN = 5;
 const RANDOM_DELAY_MAX = 100;
 ```
 
-### فعال/غیرفعال کردن قابلیت‌های حریم خصوصی
+### Enabling/disabling privacy features
 
 ```javascript
 const QNAME_MINIMIZATION_ENABLED = true;
@@ -410,7 +410,7 @@ const DNS_PADDING_ENABLED = true;
 const ECS_STRIPPING_ENABLED = true;
 ```
 
-### تغییر اندازه Cache
+### Changing the cache size
 
 ```javascript
 // Main cache size
@@ -424,143 +424,143 @@ if (negativeDnsCache.size > 2000) {
 }
 ```
 
-## 📊 محدودیت‌ها
+## 📊 Limits
 
 ### Cloudflare Workers Free Plan:
 
-- ✅ **100,000** درخواست در روز
-- ✅ **10ms** CPU time در هر درخواست
-- ✅ بدون محدودیت Bandwidth
+- ✅ **100,000** requests per day
+- ✅ **10ms** CPU time per request
+- ✅ No bandwidth limit
 
 ### Cloudflare Pages Free Plan:
 
-- ✅ **نامحدود** درخواست
-- ✅ **500** build در ماه
-- ✅ بدون محدودیت Bandwidth
+- ✅ **Unlimited** requests
+- ✅ **500** builds per month
+- ✅ No bandwidth limit
 
-**این مقادیر برای استفاده شخصی و حتی سازمانی کوچک کاملاً کافی است!**
+**These values are more than enough for personal use and even for a small organization!**
 
-## 💡 درک انواع فیلترینگ
+## 💡 Understanding Filtering Types
 
 ### 1. DNS Filtering ✅
-- سایت در سطح DNS مسدود می‌شود
-- **این DoH Proxy این نوع فیلترینگ را دور می‌زند**
+- The site is blocked at the DNS level
+- **This DoH Proxy bypasses this type of filtering**
 
 ### 2. SNI Filtering ⚠️
-- سایت بر اساس Server Name Indication مسدود می‌شود
-- نیاز به ECH یا ابزار اضافی
+- The site is blocked based on Server Name Indication
+- Requires ECH or additional tooling
 
 ### 3. IP Blocking ❌
-- آدرس IP سرور مسدود می‌شود
-- نیاز به VPN
+- The server's IP address is blocked
+- Requires a VPN
 
 ### 4. Deep Packet Inspection (DPI) ⚠️
-- بررسی عمیق محتوای بسته‌ها
-- کانفیگ Fragment می‌تواند کمک کند
-- برای دور زدن کامل نیاز به VPN
+- Deep inspection of packet contents
+- The Fragment config can help
+- Fully bypassing it requires a VPN
 
-## ❓ سوالات متداول
+## ❓ Frequently Asked Questions
 
-### آیا این سرویس VPN است؟
-خیر. این سرویس فقط DNS queries را رمزنگاری می‌کند و جایگزین VPN نیست.
+### Is this service a VPN?
+No. This service only encrypts DNS queries and is not a replacement for a VPN.
 
-### چه سایت‌هایی قابل دسترسی می‌شوند؟
-سایت‌هایی که فقط با DNS فیلتر شده‌اند. برای سایر موارد به VPN نیاز دارید.
+### Which sites become accessible?
+Sites that are filtered only by DNS. For other cases you need a VPN.
 
-### تکنولوژی Parallel Racing چگونه کار می‌کند؟
-این سیستم همزمان به 10 سرور DNS برتر (با امتیازدهی بر اساس منطقه جغرافیایی، سرعت، سلامت و قابلیت اطمینان) درخواست می‌فرستد و اولین پاسخ سریع را قبول می‌کند. این باعث کاهش latency و افزایش قابلیت اطمینان می‌شود.
+### How does Parallel Racing technology work?
+The system sends requests to the top 10 DNS servers simultaneously (scored by geographic region, speed, health, and reliability) and accepts the first fast response. This reduces latency and increases reliability.
 
-### Circuit Breaker چیست؟
-مکانیزمی برای شناسایی خودکار سرورهای ناسالم. اگر یک سرور 5 بار متوالی شکست بخورد، برای 60 ثانیه از چرخه خارج می‌شود و بعد دوباره تست می‌شود.
+### What is the Circuit Breaker?
+A mechanism for automatically detecting unhealthy servers. If a server fails 5 times in a row, it is taken out of rotation for 60 seconds and then tested again.
 
-### Geo-based Selection چگونه کار می‌کند؟
-سیستم بر اساس کشور کاربر (از طریق Cloudflare)، سرورهای نزدیک‌تر را با وزن بیشتر (15%) در امتیازدهی اولویت می‌دهد. این باعث کاهش latency می‌شود.
+### How does Geo-based Selection work?
+Based on the user's country (via Cloudflare), the system gives nearby servers a higher weight (15%) in the scoring. This reduces latency.
 
-### یادگیری تطبیقی چگونه کار می‌کند؟
-سیستم عملکرد هر سرور را (سرعت، موفقیت، قابلیت اطمینان) ثبت و تحلیل می‌کند و بر اساس این اطلاعات، سرورهای بهتر را اولویت می‌دهد. امتیازدهی: 35% سلامت + 30% سرعت + 20% قابلیت اطمینان + 15% منطقه جغرافیایی.
+### How does adaptive learning work?
+The system records and analyzes each server's performance (speed, success, reliability) and prioritizes better servers based on that information. Scoring: 35% health + 30% speed + 20% reliability + 15% geographic region.
 
-### DNS Padding چیست؟
-تکنیکی مطابق RFC 8467 که یک OPT Record استاندارد با Padding Option (code 12) به Query اضافه می‌کند تا از Traffic Analysis و شناسایی الگوهای استفاده جلوگیری کند. پیاده‌سازی واقعی و کامل این استاندارد تضمین می‌کند که همه سرورهای upstream آن را می‌پذیرند.
+### What is DNS Padding?
+A technique compliant with RFC 8467 that adds a standard OPT Record with a Padding Option (code 12) to the query in order to prevent traffic analysis and usage-pattern detection. A real, complete implementation of this standard guarantees that all upstream servers accept it.
 
-### QNAME Minimization چیست؟
-تکنیکی برای حداقل کردن اطلاعات ارسالی در Query ها به منظور افزایش حریم خصوصی.
+### What is QNAME Minimization?
+A technique for minimizing the information sent in queries in order to increase privacy.
 
-### ECS Stripping چیست؟
-پارس و حذف واقعی EDNS Client Subnet از OPT Record در Query ها که از نشت اطلاعات IP شما به سرورهای DNS جلوگیری می‌کند. این پیاده‌سازی ساختار باینری پیام DNS را تجزیه کرده و option code 8 را به طور دقیق شناسایی و حذف می‌کند.
+### What is ECS Stripping?
+Genuinely parsing and removing EDNS Client Subnet from the OPT Record in queries, which prevents your IP information from leaking to DNS servers. This implementation parses the binary structure of the DNS message and precisely identifies and removes option code 8.
 
-### Negative Caching چیست؟
-Cache کردن پاسخ‌های NXDOMAIN (دامنه وجود ندارد) برای 300 ثانیه تا از Query های تکراری برای دامنه‌های نامعتبر جلوگیری شود.
+### What is Negative Caching?
+Caching NXDOMAIN responses (domain does not exist) for 300 seconds to prevent repeated queries for invalid domains.
 
-### Adaptive Timeout چیست؟
-سیستم بر اساس میانگین زمان پاسخ هر سرور، Timeout را به صورت پویا تنظیم می‌کند: `min(baseTimeout, max(1000ms, avgResponseTime * 3))`
+### What is an Adaptive Timeout?
+Based on each server's average response time, the system dynamically adjusts the timeout: `min(baseTimeout, max(1000ms, avgResponseTime * 3))`
 
-### Fragment چیست؟
-تکنیکی برای تکه‌تکه کردن بسته‌های TLS Hello که از شناسایی توسط DPI جلوگیری می‌کند.
+### What is Fragment?
+A technique for splitting TLS Hello packets that prevents detection by DPI.
 
-### آیا سرعت اینترنت کاهش می‌یابد؟
-خیر، بلکه ممکن است افزایش یابد. با Racing Mode، Adaptive Timeout، Smart Caching و Geo-selection، معمولاً سرعت بهتر می‌شود.
+### Does internet speed decrease?
+No — it may actually increase. With Racing Mode, Adaptive Timeout, Smart Caching, and Geo-selection, speed usually improves.
 
-### Request Coalescing چیست؟
-وقتی چند کاربر یا برنامه در یک لحظه برای یک دامنه یکسان Query می‌زنند، به جای ارسال چند درخواست جداگانه به upstream، سیستم یک درخواست ارسال می‌کند و پاسخ را بین همه به اشتراک می‌گذارد. این باعث کاهش بار سرور و کاهش latency می‌شود.
+### What is Request Coalescing?
+When several users or apps query the same domain at the same moment, instead of sending several separate requests upstream, the system sends one request and shares the response among all of them. This reduces server load and latency.
 
-### Enhanced Header Randomization چیست؟
-تصادفی‌سازی پیشرفته Header های HTTP (User-Agent, Accept, X-Request-ID, X-Client-Version, Accept-Language, Sec-CH-UA) برای جلوگیری از Fingerprinting و شناسایی.
+### What is Enhanced Header Randomization?
+Advanced randomization of HTTP headers (User-Agent, Accept, X-Request-ID, X-Client-Version, Accept-Language, Sec-CH-UA) to prevent fingerprinting and identification.
 
-### CORS Support چیست و چه کمکی می‌کند؟
-پشتیبانی کامل از Cross-Origin Resource Sharing که اجازه می‌دهد مرورگرها و اپلیکیشن‌های وب مستقیماً بدون محدودیت Same-Origin با این DoH Proxy ارتباط برقرار کنند. این سازگاری را با طیف وسیع‌تری از کلاینت‌ها و ابزارها فراهم می‌کند.
+### What is CORS Support and how does it help?
+Full support for Cross-Origin Resource Sharing, which lets browsers and web applications communicate directly with this DoH Proxy without the same-origin restriction. This provides compatibility with a wider range of clients and tools.
 
-### JSON DoH API چیست؟
-پشتیبانی از فرمت `application/dns-json` که امکان Query به صورت `?name=domain&type=A` را فراهم می‌کند. این فرمت برای کلاینت‌هایی که نمی‌توانند پیام باینری DNS بسازند بسیار مفید است و سازگاری سرویس را با ابزارهای بیشتری افزایش می‌دهد.
+### What is the JSON DoH API?
+Support for the `application/dns-json` format, which enables queries in the form `?name=domain&type=A`. This format is very useful for clients that cannot construct binary DNS messages, and it increases the service's compatibility with more tools.
 
-### آیا این سرویس رایگان است؟
-بله، کاملاً رایگان و بدون محدودیت ترافیک.
+### Is this service free?
+Yes, completely free and with no traffic limit.
 
-### چطور می‌توانم آمار سرورها را ببینم؟
-به آدرس `/stats` بروید. صفحه Real-time با اطلاعات کامل سرورها نمایش داده می‌شود.
+### How can I see the server statistics?
+Go to `/stats`. A real-time page with complete server information is displayed.
 
-## 🛡️ توصیه‌های امنیتی
+## 🛡️ Security Recommendations
 
-### سناریو 1: فقط فیلترینگ DNS
-✅ استفاده از این DoH Proxy کافی است
+### Scenario 1: DNS filtering only
+✅ Using this DoH Proxy is enough
 
-### سناریو 2: فیلترینگ پیشرفته‌تر
-✅ استفاده از DoH Proxy  
-✅ فعال‌سازی ECH در مرورگر  
-✅ استفاده از کانفیگ Fragment  
-✅ VPN برای لایه‌های دیگر
+### Scenario 2: More advanced filtering
+✅ Use the DoH Proxy  
+✅ Enable ECH in the browser  
+✅ Use the Fragment config  
+✅ VPN for the other layers
 
-### نکات عمومی
-- از مرورگرهای به‌روز استفاده کنید
-- HTTPS را همیشه فعال نگه دارید
-- از نرم‌افزارهای امنیتی معتبر استفاده کنید
-- رمزهای عبور قوی داشته باشید
+### General Tips
+- Use up-to-date browsers
+- Keep HTTPS enabled at all times
+- Use reputable security software
+- Use strong passwords
 
-## 🔬 معماری تکنیکی
+## 🔬 Technical Architecture
 
-### الگوریتم امتیازدهی سرورها
+### Server Scoring Algorithm
 
 ```
 Score = (Health × 0.35) + (Speed × 0.30) + (Reliability × 0.20) + (Region × 0.15) - Freshness_Penalty
 
-Health Score: 0-100 (با جریمه 12 امتیاز برای هر شکست متوالی)
+Health Score: 0-100 (with a 12-point penalty for each consecutive failure)
 Speed Score: 100 - (avgResponseTime / 40)
 Reliability Score: (successCount / totalRequests) × 100
-Region Score: 100 (منطقه مطابق) | 75 (Global) | 50 (سایر مناطق)
+Region Score: 100 (matching region) | 75 (Global) | 50 (other regions)
 Freshness Penalty: max(15, timeSinceLastCheck / 12000)
 ```
 
-### مدیریت Cache
+### Cache Management
 
 **Main DNS Cache:**
-- سایز: 8000 entries
-- TTL: 60-3600 ثانیه (استخراج از پاسخ DNS)
-- Eviction: LRU با حذف 2000 قدیمی‌ترین entry در صورت پر شدن
-- Cache Key: الگوریتم FNV-1a hash با نادیده گرفتن Transaction ID
+- Size: 8000 entries
+- TTL: 60-3600 seconds (extracted from the DNS response)
+- Eviction: LRU, removing the 2000 oldest entries when full
+- Cache Key: FNV-1a hash algorithm, ignoring the Transaction ID
 
 **Negative Cache:**
-- سایز: 2000 entries
-- TTL: 300 ثانیه (ثابت)
-- Eviction: حذف 500 قدیمی‌ترین entry در صورت پر شدن
+- Size: 2000 entries
+- TTL: 300 seconds (fixed)
+- Eviction: removes the 500 oldest entries when full
 
 ### Circuit Breaker States
 
@@ -573,32 +573,32 @@ CLOSED → (5 failures) → OPEN → (60s timeout) → HALF-OPEN → (success) �
 ### Health Check Cycle
 
 ```
-Interval: 90 ثانیه
-Concurrent Checks: 12 سرور
+Interval: 90 seconds
+Concurrent Checks: 12 servers
 Test Query: example.com A Record
 Timeout: 2500ms
 ```
 
-## 🔗 لینک‌های مفید
+## 🔗 Useful Links
 
-- [مستندات Cloudflare Workers](https://developers.cloudflare.com/workers/)
-- [مستندات Cloudflare Pages](https://developers.cloudflare.com/pages/)
+- [Cloudflare Workers documentation](https://developers.cloudflare.com/workers/)
+- [Cloudflare Pages documentation](https://developers.cloudflare.com/pages/)
 - [RFC 8484 - DNS over HTTPS](https://datatracker.ietf.org/doc/html/rfc8484)
 - [RFC 8467 - DNS Padding](https://datatracker.ietf.org/doc/html/rfc8467)
 - [RFC 7816 - QNAME Minimization](https://datatracker.ietf.org/doc/html/rfc7816)
 - [Cloudflare DNS](https://1.1.1.1/)
-- [اپلیکیشن Intra](https://getintra.org/)
+- [Intra app](https://getintra.org/)
 
-## 📝 مجوز
+## 📝 License
 
-این پروژه تحت مجوز MIT منتشر شده است. برای اطلاعات بیشتر فایل [LICENSE](LICENSE) را مشاهده کنید.
+This project is released under the MIT license. For more information see the [LICENSE](LICENSE) file.
 
-## 👨‍💻 سازنده
+## 👨‍💻 Author
 
-طراحی و توسعه توسط: [Anonymous](https://t.me/BXAMbot)
+Designed and developed by: [Anonymous](https://t.me/An0nymou3Bot)
 
 ---
 
-⭐ اگر این پروژه برای شما مفید بود، یک ستاره به آن بدهید!
+⭐ If this project was useful to you, give it a star!
 
-🔒 برای اینترنت آزاد و امن
+🔒 For a free and secure internet

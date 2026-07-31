@@ -212,13 +212,9 @@ const RATE_LIMIT_REQUESTS = 200;
 const RATE_LIMIT_WINDOW = 60000;
 const RATE_LIMIT_CLEANUP_INTERVAL = 120000;
 const MAX_CONCURRENT_REQUESTS = 150;
-const RANDOM_DELAY_MIN = 5;
-const RANDOM_DELAY_MAX = 100;
-const DECOY_REQUEST_PROBABILITY = 0.25;
 const CIRCUIT_BREAKER_THRESHOLD = 5;
 const CIRCUIT_BREAKER_TIMEOUT = 60000;
 const NEGATIVE_CACHE_TTL = 300;
-const QNAME_MINIMIZATION_ENABLED = true;
 const DNS_PADDING_ENABLED = true;
 const ECS_STRIPPING_ENABLED = true;
 
@@ -261,27 +257,12 @@ const ADDITIONAL_HEADERS = [
   { 'Sec-CH-UA': () => `"Chromium";v="${120 + Math.floor(Math.random() * 10)}", "Google Chrome";v="${120 + Math.floor(Math.random() * 10)}"` }
 ];
 
-const DECOY_DOMAINS = [
-  'example.com', 'example.org', 'example.net', 'cloudflare.com', 'google.com',
-  'wikipedia.org', 'github.com', 'microsoft.com', 'apple.com', 'amazon.com',
-  'youtube.com', 'twitter.com', 'facebook.com', 'reddit.com', 'stackoverflow.com',
-  'mozilla.org', 'w3.org', 'ietf.org', 'rfc-editor.org', 'archive.org'
-];
-
 function getRandomUserAgent() {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
 function getRandomAcceptHeader() {
   return ACCEPT_HEADERS[Math.floor(Math.random() * ACCEPT_HEADERS.length)];
-}
-
-function getRandomDelay() {
-  return Math.floor(Math.random() * (RANDOM_DELAY_MAX - RANDOM_DELAY_MIN + 1)) + RANDOM_DELAY_MIN;
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function getAdaptiveTimeout(provider) {
@@ -498,11 +479,6 @@ async function performHealthCheck() {
   await Promise.allSettled(healthCheckPromises);
 }
 
-function applyQnameMinimization(dnsQuery) {
-  if (!QNAME_MINIMIZATION_ENABLED) return dnsQuery;
-  return dnsQuery;
-}
-
 function applyDnsPadding(dnsQuery) {
   if (!DNS_PADDING_ENABLED) return dnsQuery;
   try {
@@ -677,8 +653,7 @@ function buildEnhancedHeaders(baseHeaders) {
 }
 
 async function raceMultipleProviders(dnsQuery, headers, clientRegion = 'global') {
-  let processedQuery = applyQnameMinimization(dnsQuery);
-  processedQuery = applyDnsPadding(processedQuery);
+  let processedQuery = applyDnsPadding(dnsQuery);
   processedQuery = stripECS(processedQuery);
 
   const selectedProviders = selectBestProviders(PARALLEL_RACING_COUNT, clientRegion);
@@ -690,8 +665,6 @@ async function raceMultipleProviders(dnsQuery, headers, clientRegion = 'global')
     const timeoutId = setTimeout(() => controller.abort(), adaptiveTimeout);
 
     try {
-      await sleep(getRandomDelay());
-
       const requestHeaders = buildEnhancedHeaders({
         'Content-Type': 'application/dns-message',
         'Accept': getRandomAcceptHeader(),
@@ -925,33 +898,6 @@ function isRateLimited(clientIP) {
   return clientData.count > RATE_LIMIT_REQUESTS;
 }
 
-async function sendDecoyRequests() {
-  if (Math.random() > DECOY_REQUEST_PROBABILITY) return;
-
-  const randomDomain = DECOY_DOMAINS[Math.floor(Math.random() * DECOY_DOMAINS.length)];
-
-  const decoyQuery = new Uint8Array([
-    0x00, 0x00, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    ...Array.from(randomDomain.split('.').map(part =>
-      [part.length, ...Array.from(part).map(c => c.charCodeAt(0))]
-    ).flat()),
-    0x00, 0x00, 0x01, 0x00, 0x01
-  ]);
-
-  const randomProvider = UPSTREAM_DNS_PROVIDERS[Math.floor(Math.random() * UPSTREAM_DNS_PROVIDERS.length)];
-
-  try {
-    fetch(randomProvider.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/dns-message',
-        'User-Agent': getRandomUserAgent()
-      },
-      body: decoyQuery
-    }).catch(() => {});
-  } catch (e) {}
-}
-
 function buildCORSHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': origin || '*',
@@ -959,44 +905,6 @@ function buildCORSHeaders(origin) {
     'Access-Control-Allow-Headers': 'Content-Type, Accept, Cache-Control, DNT',
     'Access-Control-Max-Age': '86400'
   };
-}
-
-async function resolveViaJSON(dnsQuery, clientRegion) {
-  const view = new Uint8Array(dnsQuery);
-  let offset = 12;
-  let name = '';
-  while (offset < view.length) {
-    const len = view[offset];
-    if (len === 0) { offset++; break; }
-    if (name) name += '.';
-    for (let i = 1; i <= len; i++) name += String.fromCharCode(view[offset + i]);
-    offset += len + 1;
-  }
-  const qtype = (view[offset] << 8) | view[offset + 1];
-
-  const jsonProvider = 'https://cloudflare-dns.com/dns-query';
-  const jsonUrl = `${jsonProvider}?name=${encodeURIComponent(name)}&type=${qtype}`;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), RACE_TIMEOUT);
-
-  try {
-    const response = await fetch(jsonUrl, {
-      headers: {
-        'Accept': 'application/dns-json',
-        'User-Agent': getRandomUserAgent()
-      },
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (response.ok) {
-      return await response.json();
-    }
-    return null;
-  } catch (e) {
-    clearTimeout(timeoutId);
-    return null;
-  }
 }
 
 async function handleDNSQuery(request) {
@@ -1088,7 +996,6 @@ async function handleDNSQuery(request) {
   try {
     performHealthCheck().catch(() => {});
     performAdaptiveLearning().catch(() => {});
-    sendDecoyRequests().catch(() => {});
 
     const cacheKey = getCacheKey(dnsQuery);
 
@@ -1261,137 +1168,182 @@ function generateStatsPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoH Proxy Pro - Live Statistics</title>
+    <title>DoH Proxy Pro — Live Statistics</title>
     <style>
+        :root {
+            --canvas-default: #0d1117;
+            --canvas-subtle: #161b22;
+            --canvas-inset: #010409;
+            --canvas-overlay: #1c2128;
+            --border-default: #30363d;
+            --fg-default: #e6edf3;
+            --fg-muted: #8b949e;
+            --accent-fg: #4493f8;
+            --accent-emphasis: #1f6feb;
+            --success-fg: #3fb950;
+            --success-emphasis: #238636;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            --font-mono: ui-monospace, "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-            background-color: #0d1117;
-            color: #c9d1d9;
-            padding: 20px;
+            font-family: var(--font-sans);
+            background-color: var(--canvas-default);
+            color: var(--fg-default);
             min-height: 100vh;
         }
+        .topbar {
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-default);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar a {
+            color: var(--fg-default);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            padding: 32px 24px 40px;
         }
         h1 {
-            color: #58a6ff;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 600;
+            color: var(--fg-default);
+            font-size: 2em;
+            margin-bottom: 6px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
         .subtitle {
-            color: #8b949e;
-            margin-bottom: 40px;
-            font-size: 1.1em;
+            color: var(--fg-muted);
+            margin-bottom: 32px;
+            font-size: 1em;
+            direction: ltr;
+            text-align: left;
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
         }
         .stat-card {
-            background: #1c2128;
-            border: 1px solid #30363d;
-            padding: 25px;
-            border-radius: 12px;
-            transition: all 0.2s;
+            background: var(--canvas-subtle);
+            border: 1px solid var(--border-default);
+            padding: 20px;
+            border-radius: 10px;
+            transition: border-color 0.15s, transform 0.15s;
         }
         .stat-card:hover {
-            border-color: #58a6ff;
+            border-color: var(--accent-fg);
             transform: translateY(-2px);
         }
         .stat-label {
-            font-size: 0.9em;
-            color: #8b949e;
-            margin-bottom: 10px;
+            font-size: 0.88em;
+            color: var(--fg-muted);
+            margin-bottom: 8px;
         }
         .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #58a6ff;
+            font-size: 2.1em;
+            font-weight: 700;
+            color: var(--accent-fg);
+            font-family: var(--font-mono);
         }
         .table-container {
-            background: #1c2128;
-            border: 1px solid #30363d;
-            border-radius: 12px;
+            background: var(--canvas-subtle);
+            border: 1px solid var(--border-default);
+            border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 30px;
         }
         .table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
             max-height: 600px;
         }
+        .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
+        .table-wrapper::-webkit-scrollbar-track { background: transparent; }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 6px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: 760px;
         }
         th, td {
-            padding: 15px;
+            padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #30363d;
+            border-bottom: 1px solid var(--border-default);
+            font-size: 0.92em;
         }
+        td { font-family: var(--font-mono); direction: ltr; text-align: left; }
+        td:first-child { font-family: var(--font-sans); direction: ltr; }
         th {
-            background: #0d1117;
-            color: #58a6ff;
+            background: var(--canvas-inset);
+            color: var(--fg-muted);
+            font-family: var(--font-sans);
             font-weight: 600;
+            font-size: 0.85em;
             position: sticky;
             top: 0;
             z-index: 10;
         }
-        tr:hover {
-            background: #161b22;
-        }
+        tr:hover { background: var(--canvas-overlay); }
         .health-bar {
-            height: 8px;
+            height: 6px;
             background: #21262d;
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
-            margin-top: 5px;
+            margin-top: 6px;
+            width: 100px;
         }
         .health-fill {
             height: 100%;
-            background: linear-gradient(90deg, #238636 0%, #2ea043 100%);
-            transition: width 0.3s;
+            background: linear-gradient(90deg, var(--success-emphasis) 0%, var(--success-fg) 100%);
         }
         .back-button {
-            display: inline-block;
-            margin-top: 30px;
-            padding: 12px 30px;
-            background: #238636;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 24px;
+            padding: 10px 20px;
+            background: var(--success-emphasis);
             color: white;
             text-decoration: none;
             border-radius: 6px;
-            transition: all 0.2s;
+            transition: background 0.15s;
             font-weight: 600;
+            font-size: 0.92em;
         }
-        .back-button:hover {
-            background: #2ea043;
-            transform: translateY(-2px);
-        }
+        .back-button:hover { background: var(--success-fg); }
+        :focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 2px; }
         @media (max-width: 768px) {
-            .container { padding: 20px; }
-            h1 { font-size: 1.8em; }
-            .stat-value { font-size: 2em; }
-            .table-wrapper { max-height: 400px; }
-            th, td { padding: 10px; font-size: 0.9em; }
+            .container { padding: 24px 16px 32px; }
+            h1 { font-size: 1.5em; }
+            .stat-value { font-size: 1.7em; }
+            .table-wrapper { max-height: 420px; }
+            th, td { padding: 10px; font-size: 0.85em; }
         }
     </style>
 </head>
 <body>
+    <div class="topbar">
+        <a href="/">🛡️ DoH Proxy Pro</a>
+    </div>
     <div class="container">
         <h1>📊 Live Server Statistics</h1>
-        <div class="subtitle">DoH Proxy Pro - Real-time Server Statistics</div>
-        
+        <div class="subtitle">Real-time Server Statistics</div>
+
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total Servers</div>
@@ -1410,7 +1362,7 @@ function generateStatsPage() {
                 <div class="stat-value">${globalRequestCount}</div>
             </div>
         </div>
-        
+
         <div class="table-container">
             <div class="table-wrapper">
                 <table>
@@ -1444,7 +1396,7 @@ function generateStatsPage() {
                 </table>
             </div>
         </div>
-        
+
         <a href="/" class="back-button">← Back to Dashboard</a>
     </div>
 </body>
@@ -1486,521 +1438,844 @@ async function handleRequest(request) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoH Proxy Pro - DNS over HTTPS</title>
+    <title>DoH Proxy Pro — DNS over HTTPS</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --canvas-default: #0d1117;
+            --canvas-subtle: #161b22;
+            --canvas-inset: #010409;
+            --canvas-overlay: #1c2128;
+            --border-default: #30363d;
+            --border-muted: #21262d;
+            --fg-default: #e6edf3;
+            --fg-muted: #8b949e;
+            --fg-subtle: #6e7681;
+            --accent-fg: #4493f8;
+            --accent-emphasis: #1f6feb;
+            --success-fg: #3fb950;
+            --success-emphasis: #238636;
+            --danger-fg: #f85149;
+            --attention-fg: #d29922;
+            --done-fg: #a371f7;
+            --shadow-card: 0 8px 24px rgba(1, 4, 9, 0.55);
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            --font-mono: ui-monospace, "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
         }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-            background-color: #0d1117;
-            color: #c9d1d9;
+            font-family: var(--font-sans);
+            background-color: var(--canvas-default);
+            background-image: radial-gradient(ellipse 900px 500px at 50% -10%, rgba(31, 111, 235, 0.16), transparent);
+            background-repeat: no-repeat;
+            color: var(--fg-default);
             line-height: 1.6;
-            padding: 20px;
             min-height: 100vh;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+        a { color: var(--accent-fg); }
+
+        :focus-visible {
+            outline: 2px solid var(--accent-fg);
+            outline-offset: 2px;
+            border-radius: 4px;
         }
-        
-        h1 {
-            color: #58a6ff;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 600;
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .topbar-inner {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
-        
-        .badge {
-            background: linear-gradient(135deg, #238636, #2ea043);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.4em;
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--fg-default);
+            text-decoration: none;
+            font-size: 0.95em;
+            white-space: nowrap;
         }
-        
+
+        .brand-mark {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            background: linear-gradient(135deg, var(--accent-emphasis), var(--done-fg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+
+        .topnav {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .topnav::-webkit-scrollbar { display: none; }
+
+        .topnav a {
+            color: var(--fg-muted);
+            text-decoration: none;
+            font-size: 0.85em;
+            font-weight: 500;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .topnav a:hover {
+            color: var(--fg-default);
+            background: var(--canvas-overlay);
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 24px 24px;
+        }
+
+        .hero {
+            padding: 8px 0 28px;
+        }
+
+        h1.hero-title {
+            font-size: 2.3em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            letter-spacing: -0.02em;
+            flex-wrap: wrap;
+        }
+
+        .badge-pro {
+            background: linear-gradient(135deg, var(--success-emphasis), var(--success-fg));
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.38em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            vertical-align: middle;
+        }
+
+        .hero-subtitle {
+            color: var(--fg-muted);
+            margin-top: 10px;
+            font-size: 1.02em;
+            max-width: 640px;
+        }
+
+        .shields {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .shield {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.78em;
+            font-weight: 600;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-default);
+        }
+
+        .shield span {
+            padding: 4px 10px;
+        }
+
+        .shield .shield-label {
+            background: var(--canvas-overlay);
+            color: var(--fg-muted);
+        }
+
+        .shield .shield-value {
+            color: #ffffff;
+        }
+
+        .shield.blue .shield-value { background: var(--accent-emphasis); }
+        .shield.green .shield-value { background: var(--success-emphasis); }
+        .shield.purple .shield-value { background: var(--done-fg); }
+        .shield.orange .shield-value { background: #bd561d; }
+
         .status-bar {
-            background: #1c2128;
-            border: 1px solid #30363d;
+            background: var(--canvas-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 8px;
-            padding: 16px 20px;
-            margin: 25px 0;
+            padding: 14px 18px;
+            margin: 24px 0;
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        
+
         .status-indicator {
-            width: 12px;
-            height: 12px;
-            background: #3fb950;
+            width: 10px;
+            height: 10px;
+            background: var(--success-fg);
             border-radius: 50%;
-            box-shadow: 0 0 8px #3fb950;
+            box-shadow: 0 0 8px var(--success-fg);
+            flex-shrink: 0;
             animation: pulse 2s ease-in-out infinite;
         }
-        
+
+        @media (prefers-reduced-motion: reduce) {
+            .status-indicator { animation: none; }
+            html { scroll-behavior: auto; }
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.45; }
         }
-        
-        .status-text {
-            color: #8b949e;
-            font-size: 0.95em;
-        }
-        
-        .status-text strong {
-            color: #3fb950;
-        }
-        
-        h2 {
-            color: #58a6ff;
-            font-size: 1.6em;
-            margin: 35px 0 20px 0;
+
+        .status-text { color: var(--fg-muted); font-size: 0.92em; }
+        .status-text strong { color: var(--success-fg); }
+
+        section { scroll-margin-top: 72px; }
+
+        h2.section-title {
+            color: var(--fg-default);
+            font-size: 1.35em;
             font-weight: 600;
-            border-bottom: 1px solid #30363d;
+            margin: 44px 0 16px;
             padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-default);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        
+
+        h3.card-title {
+            color: var(--fg-default);
+            font-size: 1.08em;
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card, .info-box, .usage-card {
+            background: var(--canvas-subtle);
+            border: 1px solid var(--border-default);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin: 16px 0;
+        }
+
         .info-box {
-            background: #1c2128;
-            border: 1px solid #30363d;
-            border-left: 3px solid #58a6ff;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+            border-inline-start: 3px solid var(--accent-fg);
+            border-start-start-radius: 6px;
+            border-end-start-radius: 6px;
         }
-        
+
+        .info-box strong { color: var(--fg-default); }
+
         .url-container {
-            background: #0d1117;
-            border: 1px solid #30363d;
+            background: var(--canvas-inset);
+            border: 1px solid var(--border-default);
             border-radius: 8px;
-            padding: 16px;
-            margin: 15px 0;
-            position: relative;
+            padding: 14px 16px;
+            margin: 12px 0;
         }
-        
+
         .url-box {
-            font-family: 'Courier New', Monaco, monospace;
-            color: #79c0ff;
-            font-size: 1em;
+            font-family: var(--font-mono);
+            color: #a5d6ff;
+            font-size: 0.98em;
             word-break: break-all;
             direction: ltr;
             text-align: left;
-            padding: 8px 0;
+            padding: 4px 0 10px;
         }
-        
-        .copy-btn, .download-btn {
-            background: #238636;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+
+        .btn {
+            border: 1px solid var(--border-default);
+            color: var(--fg-default);
+            background: var(--canvas-overlay);
+            padding: 6px 14px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-weight: 600;
-            margin-top: 10px;
-            margin-left: 8px;
-            transition: all 0.2s;
+            transition: background 0.15s, border-color 0.15s;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            font-family: var(--font-sans);
         }
-        
-        .copy-btn:hover {
-            background: #2ea043;
+
+        .btn:hover { background: #262c36; border-color: #8b949e; }
+
+        .btn-primary {
+            background: var(--success-emphasis);
+            border-color: var(--success-emphasis);
+            color: #ffffff;
         }
-        
-        .download-btn {
-            background: #6e40c9;
+
+        .btn-primary:hover { background: var(--success-fg); border-color: var(--success-fg); }
+
+        .btn-primary.copied { background: var(--success-fg); border-color: var(--success-fg); }
+
+        .btn-accent {
+            background: var(--accent-emphasis);
+            border-color: var(--accent-emphasis);
+            color: #ffffff;
             text-decoration: none;
         }
-        
-        .download-btn:hover {
-            background: #8957e5;
+
+        .btn-accent:hover { background: var(--accent-fg); border-color: var(--accent-fg); }
+
+        .btn-purple {
+            background: var(--done-fg);
+            border-color: var(--done-fg);
+            color: #ffffff;
+            text-decoration: none;
         }
-        
-        .copy-btn.copied {
-            background: #3fb950;
-        }
-        
+
+        .btn-purple:hover { filter: brightness(1.12); }
+
         .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
         }
-        
+
         .feature-item {
-            background: #1c2128;
-            border: 1px solid #30363d;
+            background: var(--canvas-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 8px;
-            padding: 16px;
+            padding: 14px 16px;
             display: flex;
             align-items: flex-start;
             gap: 12px;
-            transition: all 0.2s;
+            transition: border-color 0.15s, transform 0.15s;
         }
-        
+
         .feature-item:hover {
-            border-color: #58a6ff;
+            border-color: var(--accent-fg);
             transform: translateY(-2px);
         }
-        
-        .feature-icon {
-            color: #3fb950;
-            font-size: 1.3em;
+
+        .feature-icon { font-size: 1.2em; flex-shrink: 0; }
+        .feature-text { color: var(--fg-default); font-size: 0.92em; }
+
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .provider-chip {
+            background: var(--canvas-inset);
+            border: 1px solid var(--border-muted);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.87em;
+            color: var(--fg-muted);
+        }
+
+        .provider-chip strong { color: var(--fg-default); }
+
+        .warning-box {
+            background: rgba(248, 81, 73, 0.08);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            border-inline-start: 3px solid var(--danger-fg);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box strong { color: #ff7b72; }
+
+        .filter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+
+        .filter-table th, .filter-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-default);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .filter-table th {
+            color: var(--fg-muted);
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 9px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 600;
+        }
+
+        .tag-yes { background: rgba(63, 185, 80, 0.15); color: var(--success-fg); }
+        .tag-no { background: rgba(248, 81, 73, 0.15); color: var(--danger-fg); }
+
+        .success-highlight { color: var(--success-fg); font-weight: 600; }
+
+        .stats-link { text-decoration: none; }
+
+        /* GitHub-style code viewer */
+        .code-viewer {
+            background: var(--canvas-inset);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            margin: 14px 0;
+            overflow: hidden;
+        }
+
+        .code-viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--canvas-subtle);
+            border-bottom: 1px solid var(--border-default);
+            padding: 8px 8px 8px 14px;
+        }
+
+        .code-viewer-filename {
+            font-family: var(--font-mono);
+            font-size: 0.83em;
+            color: var(--fg-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            direction: ltr;
+        }
+
+        .code-viewer-filename .lang-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--attention-fg);
             flex-shrink: 0;
         }
-        
-        .feature-text {
-            color: #c9d1d9;
-            font-size: 0.95em;
+
+        .code-viewer-body {
+            max-height: 340px;
+            overflow: auto;
+            direction: ltr;
         }
-        
+
+        .code-viewer-body::-webkit-scrollbar { width: 10px; height: 10px; }
+        .code-viewer-body::-webkit-scrollbar-track { background: transparent; }
+        .code-viewer-body::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 6px;
+            border: 2px solid var(--canvas-inset);
+        }
+        .code-viewer-body::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
         .code-box {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-            font-family: 'Courier New', Monaco, monospace;
+            font-family: var(--font-mono);
+            font-size: 0.82em;
+            line-height: 20px;
+            white-space: pre;
+            color: #a5d6ff;
+            padding: 12px 16px;
+            display: block;
+        }
+
+        .code-line { display: flex; }
+
+        .code-gutter {
+            color: var(--fg-subtle);
+            text-align: right;
+            user-select: none;
+            padding-inline-end: 16px;
+            min-width: 2.4em;
+            flex-shrink: 0;
+        }
+
+        .code-content { white-space: pre; }
+
+        .jk { color: #7ee787; }
+        .js { color: #a5d6ff; }
+        .jn { color: #ffa657; }
+        .jb { color: #ff7b72; }
+        .jz { color: #ff7b72; }
+
+        .usage-card p { margin: 10px 0; line-height: 1.75; }
+
+        .inline-code {
+            background: var(--canvas-inset);
+            border: 1px solid var(--border-muted);
+            font-family: var(--font-mono);
             font-size: 0.85em;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            padding: 2px 6px;
+            border-radius: 4px;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        .block-code {
+            background: var(--canvas-inset);
+            border: 1px solid var(--border-muted);
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            padding: 12px 14px;
+            border-radius: 6px;
+            display: block;
+            margin: 10px 0;
             direction: ltr;
             text-align: left;
-            color: #79c0ff;
+            color: #a5d6ff;
+            overflow-x: auto;
         }
-        
-        .usage-card {
-            background: #1c2128;
-            border: 1px solid #30363d;
+
+        details.faq-item {
+            background: var(--canvas-subtle);
+            border: 1px solid var(--border-default);
             border-radius: 8px;
-            padding: 24px;
-            margin: 20px 0;
+            margin: 10px 0;
+            padding: 4px 4px;
         }
-        
-        .usage-card h3 {
-            color: #58a6ff;
-            font-size: 1.2em;
-            margin-bottom: 15px;
+
+        details.faq-item summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 12px 14px;
             font-weight: 600;
+            color: var(--fg-default);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .usage-card p {
-            margin: 12px 0;
-            line-height: 1.7;
+
+        details.faq-item summary::-webkit-details-marker { display: none; }
+
+        details.faq-item summary::before {
+            content: "▶";
+            font-size: 0.7em;
+            color: var(--fg-muted);
+            transition: transform 0.15s;
+            flex-shrink: 0;
         }
-        
-        .warning-box {
-            background: #1c1917;
-            border: 1px solid #f85149;
-            border-left: 3px solid #f85149;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+
+        details.faq-item[open] summary::before { transform: rotate(90deg); }
+
+        details.faq-item .faq-answer {
+            padding: 0 14px 16px 38px;
+            color: var(--fg-muted);
+            line-height: 1.8;
+            font-size: 0.94em;
         }
-        
-        .warning-box strong {
-            color: #ff7b72;
-        }
-        
-        .success-highlight {
-            color: #3fb950;
-            font-weight: 600;
-        }
-        
-        .dns-list {
-            background: #1c2128;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-        
-        .dns-item {
-            padding: 10px 15px;
-            margin: 8px 0;
-            background: #0d1117;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.9em;
-            color: #8b949e;
-        }
-        
-        .stats-link {
-            display: inline-block;
-            background: #238636;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            margin: 20px 0;
-            transition: all 0.2s;
-        }
-        
-        .stats-link:hover {
-            background: #2ea043;
-            transform: translateY(-2px);
-        }
-        
+
         .footer {
             text-align: center;
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid #30363d;
-            color: #8b949e;
+            margin-top: 56px;
+            padding: 28px 0;
+            border-top: 1px solid var(--border-default);
+            color: var(--fg-muted);
+            font-size: 0.9em;
         }
-        
-        .footer a {
-            color: #58a6ff;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .footer a:hover {
-            text-decoration: underline;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 1.8em;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
+
+        .footer a { text-decoration: none; font-weight: 600; }
+        .footer a:hover { text-decoration: underline; }
+        .footer .footer-sub { margin-top: 8px; font-size: 0.9em; color: var(--fg-subtle); }
+
+        @media (max-width: 720px) {
+            .container { padding: 28px 16px 16px; }
+            h1.hero-title { font-size: 1.7em; }
+            .topbar-inner { padding: 10px 16px; }
         }
     </style>
 </head>
 <body>
+    <div class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="brand">
+                <span class="brand-mark">🛡️</span>
+                <span>DoH Proxy Pro</span>
+            </a>
+            <nav class="topnav">
+                <a href="#overview">Overview</a>
+                <a href="#features">Features</a>
+                <a href="#providers">Servers</a>
+                <a href="#setup">Setup</a>
+                <a href="#configs">Configs</a>
+                <a href="#security">Security</a>
+                <a href="#faq">FAQ</a>
+                <a href="${statsUrl}">Live Stats</a>
+            </nav>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>
-            🚀 DoH Proxy
-            <span class="badge">Pro</span>
-        </h1>
-        
+        <div class="hero" id="overview">
+            <h1 class="hero-title">
+                🚀 DoH Proxy
+                <span class="badge-pro">Pro</span>
+            </h1>
+            <p class="hero-subtitle">A personal DNS over HTTPS service with parallel routing, Circuit Breaker, and geographic server selection — for bypassing filtering at the DNS layer.</p>
+
+            <div class="shields">
+                <span class="shield blue"><span class="shield-label">runtime</span><span class="shield-value">Cloudflare Workers</span></span>
+                <span class="shield green"><span class="shield-label">protocol</span><span class="shield-value">DNS-over-HTTPS</span></span>
+                <span class="shield purple"><span class="shield-label">providers</span><span class="shield-value">190+</span></span>
+                <span class="shield orange"><span class="shield-label">license</span><span class="shield-value">MIT</span></span>
+            </div>
+        </div>
+
         <div class="status-bar">
             <div class="status-indicator"></div>
             <div class="status-text">
-                <strong>Active and ready</strong> - Parallel Racing, Circuit Breaker, geo-selection, and adaptive learning are enabled
+                <strong>Active and ready</strong> — Parallel Racing, Circuit Breaker, geo-selection, and adaptive learning are running
             </div>
         </div>
-        
+
         <div class="info-box">
             <strong>This is an advanced DNS over HTTPS (DoH) service with anti-censorship features.</strong><br>
-            Pro version with Parallel DNS Racing, Circuit Breaker Pattern, geo-based selection, QNAME Minimization, DNS Padding, ECS Stripping, Negative Caching, Adaptive Timeouts, Enhanced Header Randomization, and 15+ other capabilities.
+            The Pro version includes: Parallel DNS Racing, Circuit Breaker Pattern, Geo-based Selection, DNS Padding, ECS Stripping, Negative Caching, Adaptive Timeouts, Enhanced Header Randomization, and more.
         </div>
-        
-        <a href="${statsUrl}" class="stats-link">📊 View Live Server Statistics</a>
 
-        <h2>📍 Your Service Address:</h2>
+        <a href="${statsUrl}" class="btn btn-primary stats-link">📊 View Live Server Statistics</a>
+
+        <h2 class="section-title">📍 Your Service Address</h2>
         <div class="url-container">
             <div class="url-box" id="dohUrl">${workerUrl}</div>
-            <button class="copy-btn" onclick="copyToClipboard('dohUrl')">📋 Copy Address</button>
+            <button class="btn btn-primary" data-copy-target="dohUrl">📋 Copy Address</button>
         </div>
 
-        <h2>✨ Advanced Features:</h2>
-        <div class="feature-grid">
-            <div class="feature-item">
-                <div class="feature-icon">⚡</div>
-                <div class="feature-text">Parallel DNS Racing - tests the top 10 servers at the same time</div>
+        <section id="features">
+            <h2 class="section-title">✨ Advanced Features</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-text">Parallel DNS Racing — the top 10 servers are tried simultaneously and the first valid response wins</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🛡️</div>
+                    <div class="feature-text">Circuit Breaker Pattern — automatically manages unhealthy servers and temporarily takes them out of rotation</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🌍</div>
+                    <div class="feature-text">Geo-based Selection — picks the best server based on the user's geographic location</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🧠</div>
+                    <div class="feature-text">Adaptive learning that scores and selects servers more intelligently over time</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-text">Smart load balancing based on each server's response speed and reliability</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-text">DNS Padding per RFC 8467 — prevents packet-size analysis</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🚫</div>
+                    <div class="feature-text">ECS Stripping — genuinely removes EDNS Client Subnet from the OPT record</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-text">Smart Caching with automatic management of cache size and expiry</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⏱️</div>
+                    <div class="feature-text">Adaptive Timeouts — automatically adjusts wait time based on each server's history</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔁</div>
+                    <div class="feature-text">Negative Caching — intelligent caching of NXDOMAIN responses</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚙️</div>
+                    <div class="feature-text">Uses more than 190 trusted global DNS servers</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎭</div>
+                    <div class="feature-text">Enhanced Header Randomization against provider-side fingerprinting</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">Dynamic scoring: 35% health, 30% speed, 20% reliability, 15% region</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-text">Request Coalescing — merges concurrent requests for the same query to reduce latency</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🌏</div>
+                    <div class="feature-text">Full CORS support for browser requests</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📡</div>
+                    <div class="feature-text">JSON DoH API support with the application/dns-json format</div>
+                </div>
             </div>
-            <div class="feature-item">
-                <div class="feature-icon">🛡️</div>
-                <div class="feature-text">Circuit Breaker Pattern - automatically manages unhealthy servers</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🌍</div>
-                <div class="feature-text">Geo-based Selection - chooses the best server based on location</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🧠</div>
-                <div class="feature-text">AI-assisted adaptive learning for smarter server selection</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🔄</div>
-                <div class="feature-text">Smart load balancing based on speed and reliability</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🔒</div>
-                <div class="feature-text">DNS Padding (RFC 8467) - helps prevent traffic analysis</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-text">QNAME Minimization - reduces query information exposure</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🚫</div>
-                <div class="feature-text">ECS Stripping - removes EDNS Client Subnet data</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">💾</div>
-                <div class="feature-text">Smart LRU Caching - intelligent cache management</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">⏱️</div>
-                <div class="feature-text">Adaptive Timeouts - automatically adjusts wait times</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🔄</div>
-                <div class="feature-text">Negative Caching - intelligent NXDOMAIN caching</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">⚙️</div>
-                <div class="feature-text">Uses more than 200 trusted global DNS servers</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🎭</div>
-                <div class="feature-text">Enhanced Header Randomization - anti-fingerprinting protection</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">📊</div>
-                <div class="feature-text">Dynamic scoring: 35% health, 30% speed, 20% reliability, 15% region</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🔄</div>
-                <div class="feature-text">Intelligent fallback when racing fails</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🌐</div>
-                <div class="feature-text">Benefits from ECH on Cloudflare servers</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🔗</div>
-                <div class="feature-text">Request Coalescing - merges duplicate requests to reduce latency</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🌏</div>
-                <div class="feature-text">CORS Support - full browser request support without cross-origin limits</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">📡</div>
-                <div class="feature-text">JSON DoH API - supports application/dns-json for broader compatibility</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🔐</div>
-                <div class="feature-text">Real RFC 8467 DNS Padding with a standard OPT record</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🧹</div>
-                <div class="feature-text">Advanced ECS Stripping - parses and removes EDNS Client Subnet from OPT records</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🎲</div>
-                <div class="feature-text">Decoy Traffic with 20 varied domains to hide DNS traffic patterns</div>
-            </div>
-        </div>
+        </section>
 
-        <h2>🌐 DNS Providers Used:</h2>
-        <div class="dns-list">
-            <div class="dns-item">More than 200 trusted DNS servers from multiple countries with geo-location support</div>
-            <div class="dns-item">• Cloudflare, Google, Quad9, OpenDNS</div>
-            <div class="dns-item">• AdGuard, NextDNS, Mullvad</div>
-            <div class="dns-item">• AhaDNS (US, Netherlands, Poland, India, Singapore, Australia)</div>
-            <div class="dns-item">• BlahDNS (Finland, Japan, Germany, Singapore)</div>
-            <div class="dns-item">• Pi-DNS (Europe, US)</div>
-            <div class="dns-item">• 60+ more globally distributed servers...</div>
-        </div>
+        <section id="providers">
+            <h2 class="section-title">🌐 DNS Providers Used</h2>
+            <div class="provider-grid">
+                <div class="provider-chip"><strong>190+</strong> trusted DNS servers with global coverage and region-based selection</div>
+                <div class="provider-chip">Cloudflare, Google, Quad9, OpenDNS</div>
+                <div class="provider-chip">AdGuard, NextDNS, Mullvad</div>
+                <div class="provider-chip">AhaDNS — US, Netherlands, Poland, India, Singapore, Australia</div>
+                <div class="provider-chip">BlahDNS — Finland, Japan, Germany, Singapore</div>
+                <div class="provider-chip">Pi-DNS — Europe, US</div>
+                <div class="provider-chip">and dozens more servers with global coverage...</div>
+            </div>
+        </section>
 
         <div class="info-box">
-            <strong>✅ What this DoH proxy does:</strong><br><br>
-            • <span class="success-highlight">Fully encrypts DNS requests</span> - your DNS queries are sent over HTTPS<br>
-            • <span class="success-highlight">Bypasses DNS poisoning</span> - helps prevent DNS response tampering<br>
-            • <span class="success-highlight">Opens DNS-filtered websites</span> - works when a site is blocked only at the DNS layer<br>
-            • <span class="success-highlight">Improves privacy</span> - your ISP cannot see the domains you query<br>
-            • <span class="success-highlight">Improves security</span> - helps prevent DNS-layer man-in-the-middle attacks<br>
-            • <span class="success-highlight">Improves speed</span> - Racing Mode, Circuit Breaker, and Smart Caching select faster paths
+            <strong>✅ What this DoH proxy does</strong><br><br>
+            • <span class="success-highlight">Fully encrypts DNS requests</span> over HTTPS<br>
+            • <span class="success-highlight">Bypasses DNS poisoning</span> and prevents tampering with DNS responses<br>
+            • <span class="success-highlight">Opens websites filtered at the DNS layer</span><br>
+            • <span class="success-highlight">Improves privacy</span> — your ISP cannot see which domains you query<br>
+            • <span class="success-highlight">Prevents man-in-the-middle attacks</span> at the DNS layer<br>
+            • <span class="success-highlight">Higher speed</span> with Racing Mode, Circuit Breaker, and Smart Caching
         </div>
 
-        <div class="warning-box">
-            <strong>💡 Understanding filtering types:</strong><br><br>
-            Network filtering can happen at several layers:<br><br>
-            
-            <strong>1. DNS Filtering:</strong><br>
-            • A site is blocked at the DNS level<br>
-            • <span class="success-highlight">✓ This DoH proxy can bypass this type of filtering</span><br>
-            • Example: many websites in different countries<br><br>
-            
-            <strong>2. SNI Filtering:</strong><br>
-            • A site is blocked by Server Name Indication<br>
-            • ✗ DoH alone is not enough; ECH or additional tooling is needed<br><br>
-            
-            <strong>3. IP Blocking:</strong><br>
-            • The server IP address is blocked directly<br>
-            • ✗ DoH alone is not enough; a VPN may be required<br><br>
-            
-            <strong>4. Deep Packet Inspection - DPI:</strong><br>
-            • Network packets are inspected deeply<br>
-            • ✗ DoH alone is not enough; a VPN or advanced proxy may be required<br><br>
-            
-            <strong>Bottom line:</strong> this DoH is enough when the target site is only DNS-filtered. Other filtering methods may require a VPN or additional tools.
+        <div class="warning-box" id="security">
+            <strong>💡 Understanding filtering types</strong><br><br>
+            Network filtering usually happens at several independent layers, each with its own solution:
+            <table class="filter-table">
+                <thead>
+                    <tr><th>Filtering Layer</th><th>Description</th><th>Is this DoH enough?</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>DNS Filtering</td>
+                        <td>The site is blocked or spoofed at the DNS response level</td>
+                        <td><span class="tag tag-yes">✓ Yes</span></td>
+                    </tr>
+                    <tr>
+                        <td>SNI Filtering</td>
+                        <td>The connection is identified and blocked by the domain name in the TLS ClientHello</td>
+                        <td><span class="tag tag-no">✗ No — needs ECH or Fragment</span></td>
+                    </tr>
+                    <tr>
+                        <td>IP Blocking</td>
+                        <td>The destination IP address is blocked directly</td>
+                        <td><span class="tag tag-no">✗ No — needs a VPN/Proxy</span></td>
+                    </tr>
+                    <tr>
+                        <td>Deep Packet Inspection</td>
+                        <td>Packet patterns are inspected regardless of DNS or SNI</td>
+                        <td><span class="tag tag-no">✗ No — needs an advanced VPN/Proxy</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <strong>Bottom line:</strong> if the site you want is filtered only via DNS, this DoH is enough. For more advanced filtering (SNI/IP/DPI), use this DoH together with a Fragment config or a VPN — the two operate at different network layers and complement each other rather than replacing each other.
         </div>
 
-        <h2>📱 How to Use:</h2>
-        
-        <div class="usage-card">
-            <h3>🌐 Browsers (Firefox, Chrome, Edge, Brave)</h3>
-            <p>Open browser settings → Privacy or Security → DNS over HTTPS → choose Custom Provider and enter the address above.</p>
-            <p><strong>Enable ECH in Firefox:</strong><br>
-            1. Type about:config in the address bar<br>
-            2. Search for network.dns.echconfig.enabled<br>
-            3. Set it to true</p>
-            <p>With these settings, many DNS-filtered sites become accessible.</p>
-        </div>
+        <section id="setup">
+            <h2 class="section-title">📱 How to Use</h2>
 
-        <div class="usage-card">
-            <h3>📱 Intra App (Android)</h3>
-            <p>1. Install Intra from Google Play<br>
-            2. Open the app<br>
-            3. Tap "Configure custom server URL"<br>
-            4. Enter this address in the Custom DNS over HTTPS server URL field:</p>
-            <div class="url-container">
-                <div class="url-box">${workerUrl}</div>
+            <div class="usage-card">
+                <h3 class="card-title">🌐 Browsers (Firefox, Chrome, Edge, Brave)</h3>
+                <p>Go to browser settings → Privacy or Security → DNS over HTTPS → choose Custom Provider and enter the address above.</p>
+                <p><strong>Enable ECH in Firefox:</strong></p>
+                <p>1. Type this in the address bar: <span class="inline-code">about:config</span><br>
+                2. Search for: <span class="inline-code">network.dns.echconfig.enabled</span><br>
+                3. Set the value to true</p>
+                <p>With these settings, many DNS-filtered sites become accessible.</p>
             </div>
-            <p>5. Turn the ON switch on</p>
-            <p>This encrypts your DNS and opens sites that are blocked only by DNS filtering.</p>
-        </div>
 
-        <div class="usage-card">
-            <h3>🍎 iOS, iPadOS, and macOS</h3>
-            <p>For Apple devices, download and install your personal profile:</p>
-            <a href="${appleProfileUrl}" class="download-btn">🍎 Download iOS/macOS Profile</a>
-            <br><br>
-            <p><strong>Installation:</strong><br>
-            • <strong>iOS/iPadOS:</strong> download the file with Safari → Settings → General → VPN, DNS & Device Management → Downloaded Profile → Install<br>
-            • <strong>macOS:</strong> download the file → System Settings → Privacy & Security → Profiles → install the profile</p>
-            <p>After installation, DNS from your apps will be encrypted.</p>
-        </div>
+            <div class="usage-card">
+                <h3 class="card-title">📱 Intra App (Android)</h3>
+                <p>1. Install Intra from Google Play<br>
+                2. Open the app<br>
+                3. Tap "Configure custom server URL"<br>
+                4. Enter the address below in the Custom DNS over HTTPS server URL field:</p>
+                <div class="url-container">
+                    <div class="url-box">${workerUrl}</div>
+                </div>
+                <p>5. Turn the ON switch on</p>
+                <p>This encrypts your DNS and opens sites that are blocked only by DNS filtering.</p>
+            </div>
 
-        <div class="usage-card">
-            <h3>🔧 Xray Clients - Simple Config (v2rayNG and similar)</h3>
-            <p>For Xray-based clients, you can use this config:</p>
-            <div class="code-box" id="xrayConfig">{
+            <div class="usage-card">
+                <h3 class="card-title">🍎 iOS, iPadOS, and macOS</h3>
+                <p>For Apple devices, download and install your personal profile:</p>
+                <a href="${appleProfileUrl}" class="btn btn-purple">🍎 Download iOS/macOS Profile</a>
+                <p style="margin-top: 14px;"><strong>Installation:</strong></p>
+                <p>• <strong>iOS/iPadOS:</strong> download the file with Safari → Settings → General → VPN, DNS &amp; Device Management → Downloaded Profile → Install<br>
+                • <strong>macOS:</strong> download the file → System Settings → Privacy &amp; Security → Profiles → install the profile</p>
+                <p>After installation, DNS for all your apps is encrypted.</p>
+            </div>
+
+            <div class="usage-card">
+                <h3 class="card-title">💻 Windows 10/11</h3>
+                <p>Settings → Network &amp; Internet → Properties → DNS server assignment → Edit → Preferred DNS encryption: Encrypted only (DNS over HTTPS), then enter the address above.</p>
+            </div>
+
+            <div class="usage-card">
+                <h3 class="card-title">🐧 Linux (systemd-resolved)</h3>
+                <p>1. Edit the config file:</p>
+                <code class="block-code">sudo nano /etc/systemd/resolved.conf</code>
+                <p>2. Add these lines:</p>
+                <code class="block-code">[Resolve]<br>DNS=${workerUrl}<br>DNSOverTLS=yes</code>
+                <p>3. Restart the service:</p>
+                <code class="block-code">sudo systemctl restart systemd-resolved</code>
+            </div>
+
+            <div class="usage-card">
+                <h3 class="card-title">🔧 Router</h3>
+                <p>Depending on the model, your router may support DoH. Check your router's DNS settings. Configuring DoH on the router makes every device on the network use encrypted DNS.</p>
+            </div>
+        </section>
+
+        <section id="configs">
+            <h2 class="section-title">🔧 Xray Configs</h2>
+
+            <div class="usage-card">
+                <h3 class="card-title">Simple Config (v2rayNG and similar)</h3>
+                <p>For Xray-based clients, you can use the config below:</p>
+                <div class="code-viewer">
+                    <div class="code-viewer-header">
+                        <span class="code-viewer-filename"><span class="lang-dot"></span>doh-proxy-simple.json</span>
+                        <button class="btn" data-copy-target="xrayConfig">📋 Copy</button>
+                    </div>
+                    <div class="code-viewer-body">
+                        <div class="code-box" id="xrayConfig" data-lang="json">{
   "remarks": "🛡️ DoH Proxy Pro",
   "dns": {
     "servers": [
@@ -2046,88 +2321,123 @@ async function handleRequest(request) {
     ]
   }
 }</div>
-            <button class="copy-btn" onclick="copyToClipboard('xrayConfig')">📋 Copy Xray Config</button>
-            <br><br>
-            <p><strong>Note:</strong> this config secures your DNS and opens sites that are blocked only by DNS filtering.</p>
-        </div>
+                    </div>
+                </div>
+                <p><strong>Note:</strong> this config secures your DNS and opens sites that are blocked only by DNS filtering.</p>
+            </div>
 
-        <div class="usage-card">
-            <h3>🚀 Xray Clients - Advanced Fragment Config (Recommended)</h3>
-            <p>This config adds Fragment support alongside DoH to help with more advanced filtering:</p>
-            <div class="code-box" id="xrayFragmentConfig">{
+            <div class="usage-card">
+                <h3 class="card-title">Advanced Config with Fragment (Recommended)</h3>
+                <p>On top of DoH, this config adds Fragment support, which helps bypass SNI-based filtering at the TCP/TLS layer:</p>
+                <div class="code-viewer">
+                    <div class="code-viewer-header">
+                        <span class="code-viewer-filename"><span class="lang-dot"></span>doh-proxy-fragment.json</span>
+                        <button class="btn" data-copy-target="xrayFragmentConfig">📋 Copy</button>
+                    </div>
+                    <div class="code-viewer-body">
+                        <div class="code-box" id="xrayFragmentConfig" data-lang="json">{
   "remarks": "🛡️ DoH Proxy Pro + Fragment",
+  "version": {
+    "min": "26.6.27"
+  },
   "log": {
-    "access": "",
-    "error": "",
     "loglevel": "warning",
-    "dnsLog": false
+    "dnsLog": false,
+    "access": "none"
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "uplinkOnly": 0,
+        "downlinkOnly": 0
+      },
+      "1": {
+        "uplinkOnly": 0,
+        "downlinkOnly": 0,
+        "connIdle": 12
+      }
+    }
   },
   "dns": {
-    "tag": "dns-in",
     "hosts": {
+      "cloudflare-dns.com": "challenges.cloudflare.com",
       "${workerHost}": [
         "172.67.73.38",
         "104.19.155.92",
-        "172.67.73.163",
-        "104.18.155.42",
-        "104.16.124.175",
-        "104.16.248.249",
-        "104.16.249.249",
-        "104.26.13.8"
-      ],
-      "cloudflare-dns.com": [
-        "1.1.1.1",
-        "1.0.0.1"
+        "104.16.124.175"
       ]
     },
     "servers": [
-      "${workerUrl}",
-      "1.1.1.1",
-      "8.8.8.8"
+      {
+        "address": "${workerUrl}"
+      },
+      {
+        "address": "fakedns",
+        "domains": [
+          "domain:ir",
+          "geosite:private",
+          "geosite:category-ir",
+          "full:challenges.cloudflare.com"
+        ]
+      },
+      {
+        "tag": "no-filter-dns",
+        "address": "https://cloudflare-dns.com/dns-query",
+        "timeoutMs": 12000,
+        "finalQuery": true
+      },
+      {
+        "address": "localhost",
+        "domains": [
+          "domain:ir",
+          "geosite:private",
+          "geosite:category-ir",
+          "full:challenges.cloudflare.com"
+        ],
+        "finalQuery": true
+      }
     ],
-    "queryStrategy": "UseIP"
+    "queryStrategy": "UseSystem",
+    "useSystemHosts": true,
+    "serveStale": true
   },
   "inbounds": [
     {
       "tag": "mixed-in",
       "port": 10808,
-      "listen": "127.0.0.1",
       "protocol": "mixed",
       "sniffing": {
         "enabled": true,
         "destOverride": [
-          "http",
+          "fakedns",
           "tls",
-          "quic",
-          "fakedns"
+          "http",
+          "quic"
         ],
-        "routeOnly": true
+        "routeOnly": false
       },
       "settings": {
-        "auth": "noauth",
         "udp": true,
-        "userLevel": 8
+        "ip": "127.0.0.1"
+      },
+      "streamSettings": {
+        "sockopt": {
+          "tcpKeepAliveInterval": 1,
+          "tcpKeepAliveIdle": 11
+        }
       }
     }
   ],
   "outbounds": [
     {
-      "tag": "fragment-out",
-      "protocol": "freedom",
-      "settings": {
-        "domainStrategy": "UseIP",
-        "fragment": {
-          "packets": "1-1",
-          "length": "1",
-          "interval": "13",
-          "maxSplit": "163"
-        }
-      },
+      "tag": "block",
+      "protocol": "block"
+    },
+    {
+      "tag": "tcp-direct",
+      "protocol": "direct",
       "streamSettings": {
         "sockopt": {
-          "tcpNoDelay": true,
-          "tcpKeepAliveIdle": 100,
-          "mark": 255,
           "domainStrategy": "ForceIP",
           "happyEyeballs": {
             "tryDelayMs": 300,
@@ -2139,243 +2449,445 @@ async function handleRequest(request) {
       }
     },
     {
-      "tag": "udp-noises-out",
-      "protocol": "freedom",
+      "tag": "udp-direct",
+      "protocol": "direct",
       "settings": {
-        "domainStrategy": "UseIP",
-        "targetStrategy": "ForceIPv6v4",
-        "noises": [
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv4" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" },
-          { "type": "rand", "packet": "1200-1230", "delay": "10", "applyTo": "ipv6" }
-        ]
-      },
+        "targetStrategy": "ForceIPv6v4"
+      }
+    },
+    {
+      "tag": "dns-out",
+      "protocol": "dns",
+      "settings": {
+        "userLevel": 1
+      }
+    },
+    {
+      "tag": "tcp-fragment",
+      "protocol": "direct",
       "streamSettings": {
+        "finalmask": {
+          "tcp": [
+            {
+              "type": "fragment",
+              "settings": {
+                "packets": "1-1",
+                "lengths": [
+                  "1"
+                ],
+                "delays": [
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "400",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "400",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "400",
+                  "1"
+                ],
+                "maxSplit": "419"
+              }
+            }
+          ]
+        },
         "sockopt": {
-          "mark": 255,
-          "domainStrategy": "UseIP"
+          "domainStrategy": "ForceIP",
+          "happyEyeballs": {
+            "tryDelayMs": 300,
+            "prioritizeIPv6": true,
+            "interleave": 2,
+            "maxConcurrentTry": 20
+          }
         }
       }
     },
     {
-      "tag": "direct-out",
-      "protocol": "freedom"
-    },
-    {
-      "tag": "dns-out",
-      "protocol": "dns"
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole"
+      "tag": "tcp-fragment-tls",
+      "protocol": "direct",
+      "streamSettings": {
+        "finalmask": {
+          "tcp": [
+            {
+              "type": "fragment",
+              "settings": {
+                "packets": "tlshello",
+                "lengths": [
+                  "5",
+                  "1"
+                ],
+                "delays": [
+                  "0"
+                ],
+                "maxSplit": "0"
+              }
+            },
+            {
+              "type": "fragment",
+              "settings": {
+                "packets": "1-1",
+                "lengths": [
+                  "43",
+                  "1"
+                ],
+                "delays": [
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "400",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "400",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "1",
+                  "400",
+                  "1"
+                ],
+                "maxSplit": "522"
+              }
+            }
+          ]
+        },
+        "sockopt": {
+          "domainStrategy": "ForceIP",
+          "happyEyeballs": {
+            "tryDelayMs": 300,
+            "prioritizeIPv6": true,
+            "interleave": 2,
+            "maxConcurrentTry": 20
+          }
+        }
+      }
     }
   ],
-  "policy": {
-    "levels": {
-      "8": {
-        "connIdle": 300,
-        "downlinkOnly": 1,
-        "handshake": 4,
-        "uplinkOnly": 1
-      }
-    },
-    "system": {
-      "statsOutboundUplink": true,
-      "statsOutboundDownlink": true
-    }
-  },
   "routing": {
-    "domainStrategy": "IPIfNonMatch",
+    "domainStrategy": "IPOnDemand",
     "rules": [
       {
-        "type": "field",
-        "outboundTag": "block",
-        "ip": [
-          "geoip:private"
+        "outboundTag": "tcp-fragment-tls",
+        "inboundTag": [
+          "no-filter-dns"
         ]
       },
       {
-        "type": "field",
-        "outboundTag": "direct-out",
+        "outboundTag": "dns-out",
+        "port": 53
+      },
+      {
+        "outboundTag": "tcp-direct",
+        "network": "tcp",
         "domain": [
           "domain:ir",
+          "geosite:private",
           "geosite:category-ir"
         ]
       },
       {
-        "type": "field",
-        "outboundTag": "direct-out",
+        "outboundTag": "udp-direct",
+        "network": "udp",
+        "domain": [
+          "domain:ir",
+          "geosite:private",
+          "geosite:category-ir"
+        ]
+      },
+      {
+        "outboundTag": "block",
         "ip": [
+          "10.10.34.0/24",
+          "2001:4188:2:600::/64"
+        ]
+      },
+      {
+        "outboundTag": "tcp-direct",
+        "network": "tcp",
+        "ip": [
+          "geoip:private",
           "geoip:ir"
         ]
       },
       {
-        "type": "field",
-        "outboundTag": "dns-out",
-        "port": "53",
-        "network": "udp"
+        "outboundTag": "udp-direct",
+        "network": "udp",
+        "ip": [
+          "geoip:private",
+          "geoip:ir"
+        ]
       },
       {
-        "type": "field",
-        "outboundTag": "udp-noises-out",
+        "outboundTag": "block",
+        "network": "udp",
+        "protocol": [
+          "quic"
+        ],
+        "ip": [
+          "0.0.0.0/0",
+          "::/0"
+        ]
+      },
+      {
+        "outboundTag": "block",
+        "network": "udp",
         "port": "443",
-        "network": "udp"
+        "ip": [
+          "0.0.0.0/0",
+          "::/0"
+        ]
       },
       {
-        "type": "field",
-        "outboundTag": "fragment-out",
+        "outboundTag": "udp-direct",
+        "network": "udp",
+        "ip": [
+          "0.0.0.0/0",
+          "::/0"
+        ]
+      },
+      {
+        "outboundTag": "tcp-fragment-tls",
+        "network": "tcp",
+        "protocol": [
+          "tls"
+        ],
+        "ip": [
+          "0.0.0.0/0",
+          "::/0"
+        ]
+      },
+      {
+        "outboundTag": "tcp-fragment-tls",
+        "network": "tcp",
+        "port": "443",
+        "ip": [
+          "0.0.0.0/0",
+          "::/0"
+        ]
+      },
+      {
+        "outboundTag": "tcp-fragment",
+        "network": "tcp",
+        "ip": [
+          "0.0.0.0/0",
+          "::/0"
+        ]
+      },
+      {
+        "outboundTag": "block",
         "port": "0-65535"
       }
     ]
-  },
-  "stats": {}
+  }
 }</div>
-            <button class="copy-btn" onclick="copyToClipboard('xrayFragmentConfig')">📋 Copy Fragment Config</button>
-            <br><br>
-            <p><strong>Fragment config benefits:</strong><br>
-            • Fragment support for bypassing DPI<br>
-            • Splits TLS Hello packets<br>
-            • Improves resistance to advanced filtering</p>
-        </div>
+                    </div>
+                </div>
+                <p><strong>Fragment config benefits:</strong></p>
+                <p>• Splits the TLS ClientHello packet to bypass DPI<br>
+                • Complements DoH; it operates at a different network layer<br>
+                • Improves the ability to bypass more advanced filtering</p>
+            </div>
+        </section>
 
-
-        <div class="usage-card">
-            <h3>💻 Windows 10/11</h3>
-            <p>Settings → Network & Internet → Properties → DNS server assignment → Edit → Preferred DNS encryption: Encrypted only (DNS over HTTPS), then enter the address above.</p>
-        </div>
-
-        <div class="usage-card">
-            <h3>🐧 Linux</h3>
-            <p><strong>Using systemd-resolved:</strong><br>
-            1. Edit the configuration file:<br>
-            <code style="background: #0d1117; padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 5px 0;">sudo nano /etc/systemd/resolved.conf</code></p>
-            <p>2. Add these lines:<br>
-            <code style="background: #0d1117; padding: 10px; border-radius: 4px; display: block; margin: 10px 0;">[Resolve]<br>DNS=${workerUrl}<br>DNSOverTLS=yes</code></p>
-            <p>3. Restart the service:<br>
-            <code style="background: #0d1117; padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 5px 0;">sudo systemctl restart systemd-resolved</code></p>
-        </div>
-
-        <div class="usage-card">
-            <h3>🔧 Router</h3>
-            <p>Depending on your router model, DoH may be supported. Check your router DNS settings. Configuring DoH on the router encrypts DNS for all devices connected to the network.</p>
-        </div>
-
-        <h2>🛡️ Security Recommendations:</h2>
+        <h2 class="section-title">🛡️ Security Recommendations</h2>
         <div class="info-box">
             <strong>For maximum security and access:</strong><br><br>
-            <strong>Scenario 1 - DNS filtering only:</strong><br>
+            <strong>Scenario 1 — DNS filtering only:</strong><br>
             ✓ Use this DoH proxy<br>
             ✓ Many sites become accessible<br><br>
-            
-            <strong>Scenario 2 - More advanced filtering:</strong><br>
+
+            <strong>Scenario 2 — more advanced filtering:</strong><br>
             ✓ Use this DoH proxy<br>
             ✓ Enable ECH in your browser<br>
             ✓ Use the Fragment config in Xray<br>
-            ✓ Use a VPN for other layers when needed<br><br>
-            
+            ✓ Use a VPN for the other layers<br><br>
+
             <strong>General tips:</strong><br>
             • Use up-to-date browsers<br>
-            • Keep HTTPS enabled<br>
+            • Keep HTTPS enabled at all times<br>
             • Use reputable security software<br>
             • Use strong passwords
         </div>
 
-        <h2>❓ FAQ:</h2>
-        <div class="info-box">
-            <strong>Q: Can I access filtered sites with this DoH?</strong><br>
-            A: Yes, if the site is filtered only by DNS. If it is filtered by other methods like IP blocking or DPI, you may need a VPN.<br><br>
-            
-            <strong>Q: What is Fragment and how does it help?</strong><br>
-            A: Fragment is an anti-filtering technique that splits TLS Hello packets and makes DPI detection harder. Using Fragment alongside DoH can help against more advanced filtering.<br><br>
-            
-            <strong>Q: What is ECH and how does it help?</strong><br>
-            A: ECH, or Encrypted Client Hello, encrypts SNI and helps prevent SNI-based filtering. Both the browser and server must support it.<br><br>
-            
-            <strong>Q: How is this DoH different from 1.1.1.1?</strong><br>
-            A: This is your personal DoH proxy running on Cloudflare Workers, with advanced anti-censorship techniques such as 10-server Parallel Racing, Circuit Breaker, geo-selection, adaptive learning, DNS Padding, QNAME Minimization, Negative Caching, Adaptive Timeouts, and 15+ other capabilities. It still uses trusted DNS providers, but with much more control.<br><br>
-            
-            <strong>Q: Is this service free?</strong><br>
-            A: Yes, as long as you stay within the Cloudflare Workers free tier, such as 100,000 requests per day.<br><br>
-            
-            <strong>Q: Will using this DoH reduce speed?</strong><br>
-            A: Usually no. It may improve speed because Smart Caching and Racing Mode use the first fast response.<br><br>
-            
-            <strong>Q: What is the difference between the simple config and the Fragment config?</strong><br>
-            A: The simple config only enables DoH and is enough for DNS filtering. The Fragment config adds Fragment support, which helps with more advanced DPI filtering. For maximum resilience, the Fragment config is recommended.<br><br>
-            
-            <strong>Q: Can anyone see that I use this service?</strong><br>
-            A: Your DNS requests are encrypted, so your ISP cannot see their contents. It can only see that you connect to Cloudflare.<br><br>
-            
-            <strong>Q: How does Parallel Racing work?</strong><br>
-            A: The system sends each query to the top 10 DNS servers at the same time, scored by region, speed, health, and reliability, then accepts the first fast response. This reduces latency and improves reliability.<br><br>
-            
-            <strong>Q: What is Request Coalescing?</strong><br>
-            A: When multiple users or apps query the same domain at the same moment, the Worker sends one upstream request and shares the response with all waiting callers. This reduces server load and latency.<br><br>
-            
-        </div>
+        <section id="faq">
+            <h2 class="section-title">❓ Frequently Asked Questions</h2>
+
+            <details class="faq-item">
+                <summary>Can I access filtered sites with this DoH?</summary>
+                <div class="faq-answer">Yes, if the site is filtered only by DNS. If it is filtered by other methods (IP blocking, DPI, SNI), you will also need Fragment or a VPN.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>What is Fragment and how does it help?</summary>
+                <div class="faq-answer">Fragment is an anti-filtering technique that splits the TLS ClientHello packet at the TCP level so that DPI cannot see the domain name (SNI) in a single complete packet. It applies to the connection to the destination itself, not to DNS, which is why it complements DoH rather than replacing it.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>What is ECH and how does it help?</summary>
+                <div class="faq-answer">Encrypted Client Hello encrypts the domain name (SNI) during the TLS handshake and prevents SNI-based filtering. To use it, both your browser or client and the destination server must support it.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>How is this DoH different from 1.1.1.1?</summary>
+                <div class="faq-answer">This is your own personal DoH proxy running on a Cloudflare Worker. Instead of relying on a single provider, it sends requests to the top 10 DNS servers simultaneously (Parallel Racing), sets unhealthy servers aside with a Circuit Breaker, picks the best server based on geographic location, and caches results intelligently. It ultimately uses the same trusted providers, but with an added layer of reliability and speed.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>Is this service free?</summary>
+                <div class="faq-answer">Yes — it is completely free within the Cloudflare Workers free tier (100,000 requests per day).</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>Does using this DoH reduce speed?</summary>
+                <div class="faq-answer">No — with smart caching and Racing Mode you usually get the fastest response available.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>What is the difference between the simple config and the Fragment config?</summary>
+                <div class="faq-answer">The simple config only enables DoH and is enough to bypass filtering at the DNS layer. On top of DoH, the Fragment config also splits TLS ClientHello packets, which helps bypass more advanced filtering (SNI/DPI). For maximum access, the Fragment config is recommended.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>Can anyone see that I use this service?</summary>
+                <div class="faq-answer">Your DNS requests are encrypted and your ISP cannot see their contents; it can only see that you are connected to a Cloudflare server.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>How does Parallel Racing work?</summary>
+                <div class="faq-answer">The system sends requests to the top 10 DNS servers simultaneously (scored by region, speed, health, and reliability) and accepts the first valid response. This reduces latency and improves reliability.</div>
+            </details>
+
+            <details class="faq-item">
+                <summary>What is Request Coalescing?</summary>
+                <div class="faq-answer">When several users or apps query the same domain at the same time, instead of sending several separate requests to the upstream provider, the Worker sends only one and shares the response among all of them. This reduces server load and latency.</div>
+            </details>
+        </section>
 
         <div class="footer">
-            <p>Designed by: <a href="https://t.me/BXAMbot" target="_blank" rel="noopener noreferrer">Anonymous</a></p>
-            <p style="margin-top: 10px; font-size: 0.9em; color: #6e7681;">Enhanced Anti-Censorship Version with Parallel Racing Technology</p>
+            <p>Engineered by: <a href="https://t.me/An0nymou3Bot" target="_blank" rel="noopener noreferrer">Anonymous</a></p>
+            <p class="footer-sub">Enhanced Anti-Censorship Version with Parallel Racing Technology</p>
         </div>
     </div>
 
     <script>
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const text = element.textContent;
-            const btn = event.target;
-            const originalHTML = btn.innerHTML;
-            
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    btn.classList.add('copied');
-                    btn.innerHTML = '✓ Copied!';
-                    setTimeout(() => {
-                        btn.classList.remove('copied');
-                        btn.innerHTML = originalHTML;
-                    }, 2000);
-                }).catch(() => {
-                    fallbackCopy(text, btn, originalHTML);
-                });
-            } else {
-                fallbackCopy(text, btn, originalHTML);
-            }
-        }
-        
-        function fallbackCopy(text, btn, originalHTML) {
+        function fallbackCopy(text) {
             const textArea = document.createElement('textarea');
             textArea.value = text;
             textArea.style.position = 'fixed';
             textArea.style.left = '-999999px';
             document.body.appendChild(textArea);
             textArea.select();
-            
             try {
                 document.execCommand('copy');
+            } catch (err) {}
+            document.body.removeChild(textArea);
+        }
+
+        function copyToClipboard(elementId, btn) {
+            const element = document.getElementById(elementId);
+            const text = element.getAttribute('data-raw') || element.textContent;
+            const originalHTML = btn.innerHTML;
+
+            const onDone = () => {
                 btn.classList.add('copied');
                 btn.innerHTML = '✓ Copied!';
                 setTimeout(() => {
                     btn.classList.remove('copied');
                     btn.innerHTML = originalHTML;
                 }, 2000);
-            } catch (err) {
-                btn.innerHTML = '❌ Copy failed';
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                }, 2000);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(onDone).catch(() => {
+                    fallbackCopy(text);
+                    onDone();
+                });
+            } else {
+                fallbackCopy(text);
+                onDone();
             }
-            document.body.removeChild(textArea);
         }
+
+        document.addEventListener('click', function (event) {
+            const btn = event.target.closest('[data-copy-target]');
+            if (!btn) return;
+            copyToClipboard(btn.getAttribute('data-copy-target'), btn);
+        });
+
+        function highlightJSONLine(line) {
+            const escaped = line
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return escaped.replace(
+                /("[^"]*"(\\s*:)?|\\btrue\\b|\\bfalse\\b|\\bnull\\b|-?\\d+(?:\\.\\d+)?)/g,
+                function (match) {
+                    let cls = 'jn';
+                    if (/^"/.test(match)) {
+                        cls = /:$/.test(match) ? 'jk' : 'js';
+                    } else if (/^(true|false)$/.test(match)) {
+                        cls = 'jb';
+                    } else if (/^null$/.test(match)) {
+                        cls = 'jz';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                }
+            );
+        }
+
+        function enhanceCodeBlocks() {
+            document.querySelectorAll('.code-box[data-lang="json"]').forEach(function (box) {
+                const raw = box.textContent.replace(/\\n$/, '');
+                const lines = raw.split('\\n');
+                const rows = lines.map(function (line, i) {
+                    return '<div class="code-line"><span class="code-gutter">' + (i + 1) +
+                        '</span><span class="code-content">' + (highlightJSONLine(line) || ' ') + '</span></div>';
+                });
+                box.setAttribute('data-raw', raw);
+                box.innerHTML = rows.join('');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', enhanceCodeBlocks);
     </script>
 </body>
 </html>`;
