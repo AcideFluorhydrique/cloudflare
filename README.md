@@ -36,7 +36,7 @@ DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Worker
 - Automatic optimization over time
 - Dynamic scoring: **35% health + 30% speed + 20% reliability + 15% geographic region**
 
-#### 🌐 Support for more than 220 trusted DNS servers
+#### 🌐 Support for more than 190 trusted DNS servers
 - Cloudflare, Google, Quad9, OpenDNS
 - AdGuard, NextDNS, Mullvad
 - AhaDNS (US, Netherlands, Poland, India, Singapore, Australia)
@@ -47,18 +47,14 @@ DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Worker
 
 #### 🔒 Advanced Privacy and Security
 - **DNS Padding (RFC 8467)**: A real, standard-compliant implementation with a complete OPT Record to prevent traffic analysis
-- **QNAME Minimization**: Minimizes the information contained in queries
 - **Advanced ECS Stripping**: Genuinely parses and removes EDNS Client Subnet from the OPT Record to prevent IP leakage
-- **Enhanced Header Randomization**: Advanced randomization of headers (X-Request-ID, X-Client-Version, Accept-Language, Sec-CH-UA)
-- **Random Header Ordering**: Randomized header order for anti-fingerprinting
+- **Enhanced Header Randomization**: Randomizes User-Agent and Accept, and randomly adds one extra header (X-Request-ID, X-Client-Version, Accept-Language, Sec-CH-UA) to each request
+- **Random X-Forwarded-For**: Occasionally adds a random IP to the headers to reduce traceability
 
 #### 🛡️ Anti-Censorship and Error Handling
 - Automatic **Health Check** every 90 seconds
 - **Circuit Breaker** for failure management
 - **Intelligent Fallback** when racing fails
-- **Domain Fronting** simulation
-- **Random Delay** (5-100ms) for anti-DPI
-- **Enhanced Decoy Requests** with 25% probability and 20 varied domains to mislead monitoring systems
 - **Request Coalescing**: Intelligently merges duplicate concurrent requests to reduce load and latency
 
 #### ⚡ High Performance and Efficiency
@@ -124,7 +120,7 @@ DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Worker
 
 1. Click **Edit Code**
 2. Delete all the default code
-3. Copy the contents of [`worker.js`](https://github.com/4n0nymou3/YOUR-REPO-NAME/blob/main/manual-worker/worker.js) and paste it in
+3. Copy the contents of [`worker.js`](https://github.com/4n0nymou3/cloudflare-doh-proxy/blob/main/manual-worker/worker.js) and paste it in
 4. Click **Save and Deploy**
 
 #### Step 3: Get the URL
@@ -252,7 +248,7 @@ To bypass more advanced filtering:
 - DNS encryption
 - Fragment for bypassing DPI
 - Splitting the TLS Hello
-- SOCKS (10808) and HTTP (10809) ports
+- Mixed port (SOCKS5 and HTTP on a single shared port: 10808)
 
 ### 💻 Desktop
 
@@ -308,7 +304,7 @@ https://your-domain/stats
 ```
 
 **Information available:**
-- Total number of servers (220+)
+- Total number of servers (190+)
 - Number of healthy servers
 - Average health of the whole system
 - Total number of requests
@@ -389,23 +385,15 @@ const DNS_CACHE_TTL_DEFAULT = 300;
 const NEGATIVE_CACHE_TTL = 300;
 ```
 
-### Changing the Decoy Requests probability
+### Changing the random X-Forwarded-For probability
 
 ```javascript
-const DECOY_REQUEST_PROBABILITY = 0.25;
-```
-
-### Changing the Random Delay range
-
-```javascript
-const RANDOM_DELAY_MIN = 5;
-const RANDOM_DELAY_MAX = 100;
+if (Math.random() < 0.25) {
 ```
 
 ### Enabling/disabling privacy features
 
 ```javascript
-const QNAME_MINIMIZATION_ENABLED = true;
 const DNS_PADDING_ENABLED = true;
 const ECS_STRIPPING_ENABLED = true;
 ```
@@ -482,9 +470,6 @@ The system records and analyzes each server's performance (speed, success, relia
 ### What is DNS Padding?
 A technique compliant with RFC 8467 that adds a standard OPT Record with a Padding Option (code 12) to the query in order to prevent traffic analysis and usage-pattern detection. A real, complete implementation of this standard guarantees that all upstream servers accept it.
 
-### What is QNAME Minimization?
-A technique for minimizing the information sent in queries in order to increase privacy.
-
 ### What is ECS Stripping?
 Genuinely parsing and removing EDNS Client Subnet from the OPT Record in queries, which prevents your IP information from leaking to DNS servers. This implementation parses the binary structure of the DNS message and precisely identifies and removes option code 8.
 
@@ -546,7 +531,7 @@ Health Score: 0-100 (with a 12-point penalty for each consecutive failure)
 Speed Score: 100 - (avgResponseTime / 40)
 Reliability Score: (successCount / totalRequests) × 100
 Region Score: 100 (matching region) | 75 (Global) | 50 (other regions)
-Freshness Penalty: max(15, timeSinceLastCheck / 12000)
+Freshness Penalty: min(15, timeSinceLastCheck / 12000)
 ```
 
 ### Cache Management
@@ -585,9 +570,12 @@ Timeout: 2500ms
 - [Cloudflare Pages documentation](https://developers.cloudflare.com/pages/)
 - [RFC 8484 - DNS over HTTPS](https://datatracker.ietf.org/doc/html/rfc8484)
 - [RFC 8467 - DNS Padding](https://datatracker.ietf.org/doc/html/rfc8467)
-- [RFC 7816 - QNAME Minimization](https://datatracker.ietf.org/doc/html/rfc7816)
 - [Cloudflare DNS](https://1.1.1.1/)
 - [Intra app](https://getintra.org/)
+
+## 🧰 Helper Tool for Forkers: Automatic Fragment Config Updates
+
+If you fork this repository, there is also an optional helper tool under `.github/` that is unrelated to the core DoH Proxy: whenever you find a new Fragment config (for example from another source), just replace the contents of `configs/fragment-draft.json` with it and commit. A GitHub Action then — fully automatically and without any external API or key — strips any personal or promotional information from it, validates it technically, and saves and commits the final version directly to `configs/doh-proxy-fragment.template.json` (the same file the web panel always reads from).
 
 ## 📝 License
 

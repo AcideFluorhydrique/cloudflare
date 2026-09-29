@@ -1458,6 +1458,7 @@ async function handleRequest(request) {
             --attention-fg: #d29922;
             --done-fg: #a371f7;
             --shadow-card: 0 8px 24px rgba(1, 4, 9, 0.55);
+            --topbar-overlay: rgba(13, 17, 23, 0.45);
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
             --font-mono: ui-monospace, "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
         }
@@ -1488,7 +1489,7 @@ async function handleRequest(request) {
             position: sticky;
             top: 0;
             z-index: 50;
-            background: rgba(13, 17, 23, 0.85);
+            background: var(--topbar-overlay);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-default);
@@ -1555,7 +1556,7 @@ async function handleRequest(request) {
         .container {
             max-width: 1080px;
             margin: 0 auto;
-            padding: 40px 24px 24px;
+            padding: 40px 24px calc(96px + env(safe-area-inset-bottom));
         }
 
         .hero {
@@ -1869,10 +1870,18 @@ async function handleRequest(request) {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            flex-wrap: wrap;
+            gap: 8px 12px;
             background: var(--canvas-subtle);
             border-bottom: 1px solid var(--border-default);
             padding: 8px 8px 8px 14px;
+        }
+
+        .code-viewer-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .code-viewer-filename {
@@ -2004,20 +2013,27 @@ async function handleRequest(request) {
         }
 
         .footer {
-            text-align: center;
-            margin-top: 56px;
-            padding: 28px 0;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+            background: var(--topbar-overlay);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-top: 1px solid var(--border-default);
+            text-align: center;
+            padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
             color: var(--fg-muted);
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .footer a { text-decoration: none; font-weight: 600; }
         .footer a:hover { text-decoration: underline; }
-        .footer .footer-sub { margin-top: 8px; font-size: 0.9em; color: var(--fg-subtle); }
+        .footer .footer-sub { margin-top: 4px; font-size: 0.85em; color: var(--fg-subtle); }
 
         @media (max-width: 720px) {
-            .container { padding: 28px 16px 16px; }
+            .container { padding: 28px 16px calc(96px + env(safe-area-inset-bottom)); }
             h1.hero-title { font-size: 1.7em; }
             .topbar-inner { padding: 10px 16px; }
         }
@@ -2328,397 +2344,17 @@ async function handleRequest(request) {
 
             <div class="usage-card">
                 <h3 class="card-title">Advanced Config with Fragment (Recommended)</h3>
-                <p>On top of DoH, this config adds Fragment support, which helps bypass SNI-based filtering at the TCP/TLS layer:</p>
+                <p>On top of DoH, this config adds Fragment support, which helps bypass SNI-based filtering at the TCP/TLS layer. The config is always fetched live from the project's GitHub repository; if the box below fails to load or the config looks outdated, click "Fetch Latest Config":</p>
                 <div class="code-viewer">
                     <div class="code-viewer-header">
                         <span class="code-viewer-filename"><span class="lang-dot"></span>doh-proxy-fragment.json</span>
-                        <button class="btn" data-copy-target="xrayFragmentConfig">📋 Copy</button>
+                        <div class="code-viewer-actions">
+                            <button class="btn" data-copy-target="xrayFragmentConfig">📋 Copy</button>
+                            <button class="btn" data-reload-target="xrayFragmentConfig">🔄 Fetch Latest Config</button>
+                        </div>
                     </div>
                     <div class="code-viewer-body">
-                        <div class="code-box" id="xrayFragmentConfig" data-lang="json">{
-  "remarks": "🛡️ DoH Proxy Pro + Fragment",
-  "version": {
-    "min": "26.6.27"
-  },
-  "log": {
-    "loglevel": "warning",
-    "dnsLog": false,
-    "access": "none"
-  },
-  "policy": {
-    "levels": {
-      "0": {
-        "uplinkOnly": 0,
-        "downlinkOnly": 0
-      },
-      "1": {
-        "uplinkOnly": 0,
-        "downlinkOnly": 0,
-        "connIdle": 12
-      }
-    }
-  },
-  "dns": {
-    "hosts": {
-      "cloudflare-dns.com": "challenges.cloudflare.com",
-      "${workerHost}": [
-        "172.67.73.38",
-        "104.19.155.92",
-        "104.16.124.175"
-      ]
-    },
-    "servers": [
-      {
-        "address": "${workerUrl}"
-      },
-      {
-        "address": "fakedns",
-        "domains": [
-          "domain:ir",
-          "geosite:private",
-          "geosite:category-ir",
-          "full:challenges.cloudflare.com"
-        ]
-      },
-      {
-        "tag": "no-filter-dns",
-        "address": "https://cloudflare-dns.com/dns-query",
-        "timeoutMs": 12000,
-        "finalQuery": true
-      },
-      {
-        "address": "localhost",
-        "domains": [
-          "domain:ir",
-          "geosite:private",
-          "geosite:category-ir",
-          "full:challenges.cloudflare.com"
-        ],
-        "finalQuery": true
-      }
-    ],
-    "queryStrategy": "UseSystem",
-    "useSystemHosts": true,
-    "serveStale": true
-  },
-  "inbounds": [
-    {
-      "tag": "mixed-in",
-      "port": 10808,
-      "protocol": "mixed",
-      "sniffing": {
-        "enabled": true,
-        "destOverride": [
-          "fakedns",
-          "tls",
-          "http",
-          "quic"
-        ],
-        "routeOnly": false
-      },
-      "settings": {
-        "udp": true,
-        "ip": "127.0.0.1"
-      },
-      "streamSettings": {
-        "sockopt": {
-          "tcpKeepAliveInterval": 1,
-          "tcpKeepAliveIdle": 11
-        }
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "block",
-      "protocol": "block"
-    },
-    {
-      "tag": "tcp-direct",
-      "protocol": "direct",
-      "streamSettings": {
-        "sockopt": {
-          "domainStrategy": "ForceIP",
-          "happyEyeballs": {
-            "tryDelayMs": 300,
-            "prioritizeIPv6": true,
-            "interleave": 2,
-            "maxConcurrentTry": 20
-          }
-        }
-      }
-    },
-    {
-      "tag": "udp-direct",
-      "protocol": "direct",
-      "settings": {
-        "targetStrategy": "ForceIPv6v4"
-      }
-    },
-    {
-      "tag": "dns-out",
-      "protocol": "dns",
-      "settings": {
-        "userLevel": 1
-      }
-    },
-    {
-      "tag": "tcp-fragment",
-      "protocol": "direct",
-      "streamSettings": {
-        "finalmask": {
-          "tcp": [
-            {
-              "type": "fragment",
-              "settings": {
-                "packets": "1-1",
-                "lengths": [
-                  "1"
-                ],
-                "delays": [
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "400",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "400",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "400",
-                  "1"
-                ],
-                "maxSplit": "419"
-              }
-            }
-          ]
-        },
-        "sockopt": {
-          "domainStrategy": "ForceIP",
-          "happyEyeballs": {
-            "tryDelayMs": 300,
-            "prioritizeIPv6": true,
-            "interleave": 2,
-            "maxConcurrentTry": 20
-          }
-        }
-      }
-    },
-    {
-      "tag": "tcp-fragment-tls",
-      "protocol": "direct",
-      "streamSettings": {
-        "finalmask": {
-          "tcp": [
-            {
-              "type": "fragment",
-              "settings": {
-                "packets": "tlshello",
-                "lengths": [
-                  "5",
-                  "1"
-                ],
-                "delays": [
-                  "0"
-                ],
-                "maxSplit": "0"
-              }
-            },
-            {
-              "type": "fragment",
-              "settings": {
-                "packets": "1-1",
-                "lengths": [
-                  "43",
-                  "1"
-                ],
-                "delays": [
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "400",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "400",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "1",
-                  "400",
-                  "1"
-                ],
-                "maxSplit": "522"
-              }
-            }
-          ]
-        },
-        "sockopt": {
-          "domainStrategy": "ForceIP",
-          "happyEyeballs": {
-            "tryDelayMs": 300,
-            "prioritizeIPv6": true,
-            "interleave": 2,
-            "maxConcurrentTry": 20
-          }
-        }
-      }
-    }
-  ],
-  "routing": {
-    "domainStrategy": "IPOnDemand",
-    "rules": [
-      {
-        "outboundTag": "tcp-fragment-tls",
-        "inboundTag": [
-          "no-filter-dns"
-        ]
-      },
-      {
-        "outboundTag": "dns-out",
-        "port": 53
-      },
-      {
-        "outboundTag": "tcp-direct",
-        "network": "tcp",
-        "domain": [
-          "domain:ir",
-          "geosite:private",
-          "geosite:category-ir"
-        ]
-      },
-      {
-        "outboundTag": "udp-direct",
-        "network": "udp",
-        "domain": [
-          "domain:ir",
-          "geosite:private",
-          "geosite:category-ir"
-        ]
-      },
-      {
-        "outboundTag": "block",
-        "ip": [
-          "10.10.34.0/24",
-          "2001:4188:2:600::/64"
-        ]
-      },
-      {
-        "outboundTag": "tcp-direct",
-        "network": "tcp",
-        "ip": [
-          "geoip:private",
-          "geoip:ir"
-        ]
-      },
-      {
-        "outboundTag": "udp-direct",
-        "network": "udp",
-        "ip": [
-          "geoip:private",
-          "geoip:ir"
-        ]
-      },
-      {
-        "outboundTag": "block",
-        "network": "udp",
-        "protocol": [
-          "quic"
-        ],
-        "ip": [
-          "0.0.0.0/0",
-          "::/0"
-        ]
-      },
-      {
-        "outboundTag": "block",
-        "network": "udp",
-        "port": "443",
-        "ip": [
-          "0.0.0.0/0",
-          "::/0"
-        ]
-      },
-      {
-        "outboundTag": "udp-direct",
-        "network": "udp",
-        "ip": [
-          "0.0.0.0/0",
-          "::/0"
-        ]
-      },
-      {
-        "outboundTag": "tcp-fragment-tls",
-        "network": "tcp",
-        "protocol": [
-          "tls"
-        ],
-        "ip": [
-          "0.0.0.0/0",
-          "::/0"
-        ]
-      },
-      {
-        "outboundTag": "tcp-fragment-tls",
-        "network": "tcp",
-        "port": "443",
-        "ip": [
-          "0.0.0.0/0",
-          "::/0"
-        ]
-      },
-      {
-        "outboundTag": "tcp-fragment",
-        "network": "tcp",
-        "ip": [
-          "0.0.0.0/0",
-          "::/0"
-        ]
-      },
-      {
-        "outboundTag": "block",
-        "port": "0-65535"
-      }
-    ]
-  }
-}</div>
+                        <div class="code-box" id="xrayFragmentConfig" data-lang="json"><div class="code-line"><span class="code-gutter">1</span><span class="code-content" style="color: var(--fg-muted);">Fetching config from GitHub...</span></div></div>
                     </div>
                 </div>
                 <p><strong>Fragment config benefits:</strong></p>
@@ -2848,6 +2484,11 @@ async function handleRequest(request) {
         }
 
         document.addEventListener('click', function (event) {
+            const reloadBtn = event.target.closest('[data-reload-target]');
+            if (reloadBtn) {
+                loadDynamicFragmentConfig(reloadBtn);
+                return;
+            }
             const btn = event.target.closest('[data-copy-target]');
             if (!btn) return;
             copyToClipboard(btn.getAttribute('data-copy-target'), btn);
@@ -2887,7 +2528,55 @@ async function handleRequest(request) {
             });
         }
 
-        document.addEventListener('DOMContentLoaded', enhanceCodeBlocks);
+        const WORKER_URL = "${workerUrl}";
+        const WORKER_HOST = "${workerHost}";
+        const FRAGMENT_CONFIG_SOURCE = 'https://raw.githubusercontent.com/4n0nymou3/cloudflare-doh-proxy/main/configs/doh-proxy-fragment.template.json';
+
+        async function loadDynamicFragmentConfig(triggerBtn) {
+            const box = document.getElementById('xrayFragmentConfig');
+            if (!box) return;
+            const originalBtnHTML = triggerBtn ? triggerBtn.innerHTML : null;
+            if (triggerBtn) {
+                triggerBtn.disabled = true;
+                triggerBtn.innerHTML = '⏳ Fetching...';
+            }
+            try {
+                const response = await fetch(FRAGMENT_CONFIG_SOURCE, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                let text = await response.text();
+                text = text.split('\${workerUrl}').join(WORKER_URL);
+                text = text.split('\${workerHost}').join(WORKER_HOST);
+                JSON.parse(text);
+                const raw = text.trim();
+                const lines = raw.split(String.fromCharCode(10));
+                const rows = lines.map(function (line, i) {
+                    return '<div class="code-line"><span class="code-gutter">' + (i + 1) +
+                        '</span><span class="code-content">' + (highlightJSONLine(line) || ' ') + '</span></div>';
+                });
+                box.setAttribute('data-raw', raw);
+                box.innerHTML = rows.join('');
+                if (triggerBtn) {
+                    triggerBtn.innerHTML = '✅ Updated';
+                    setTimeout(function () {
+                        triggerBtn.disabled = false;
+                        triggerBtn.innerHTML = originalBtnHTML;
+                    }, 2000);
+                }
+            } catch (err) {
+                box.setAttribute('data-raw', '');
+                box.innerHTML = '<div class="code-line"><span class="code-gutter">1</span><span class="code-content" style="color: var(--danger-fg);">Failed to fetch the config from GitHub. Click "Fetch Latest Config" to try again.</span></div>';
+                console.warn('Fragment config fetch failed.', err);
+                if (triggerBtn) {
+                    triggerBtn.disabled = false;
+                    triggerBtn.innerHTML = originalBtnHTML;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            enhanceCodeBlocks();
+            loadDynamicFragmentConfig();
+        });
     </script>
 </body>
 </html>`;
