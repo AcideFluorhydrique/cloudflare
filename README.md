@@ -1,6 +1,8 @@
 # 🚀 DoH Proxy Pro - Cloudflare
 
-A powerful DoH (DNS over HTTPS) Proxy with Parallel Racing technology, Circuit Breaker, Geo-selection, and adaptive learning - completely free!
+A personal DoH (DNS over HTTPS) proxy that forwards only to Cloudflare's own resolver, with automatic failover, caching, and privacy hardening - completely free!
+
+> **About this fork:** unlike upstream, which races queries across 190+ third-party resolvers, this fork forwards each query to a single Cloudflare endpoint (`PARALLEL_RACING_COUNT = 1`) and keeps only Cloudflare's own unfiltered resolvers. Cloudflare already hosts the proxy and sees the queries anyway, so this adds no extra party that can see your DNS traffic, and an untrusted resolver can never "win the race".
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange.svg)](https://workers.cloudflare.com/)
@@ -12,11 +14,11 @@ DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Worker
 
 ### ✨ Advanced Features
 
-#### 🎯 Parallel DNS Racing
-- Sends requests to the **top 10 DNS servers** simultaneously
-- Accepts the first fast response
-- Dramatically reduces latency
-- Increases reliability
+#### ☁️ Cloudflare-Only, Single-Upstream Forwarding
+- Each query is forwarded to **one** Cloudflare resolver endpoint
+- The next endpoint is tried only if that one fails
+- No third-party resolvers ever see your queries
+- Consistent answers (no mixing of filtered and unfiltered resolvers)
 
 #### 🔌 Circuit Breaker Pattern
 - Automatically detects unhealthy servers
@@ -24,26 +26,17 @@ DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Worker
 - Automatic recovery after 60 seconds
 - Three states: Closed, Open, Half-Open
 
-#### 🌍 Geo-based Provider Selection
-- Automatically detects the user's geographic location
-- Prioritizes nearby servers (reduces latency)
-- Supports 6 regions: NA, EU, Asia, Oceania, SA, Global
-- Weighted at 15% in the final score
+#### 🧠 Endpoint Scoring
+- Tracks each endpoint's health, speed, and reliability
+- The best-scoring endpoint becomes the primary
+- Scoring: **35% health + 30% speed + 20% reliability + 15% region** (all endpoints are global, so region has no effect)
 
-#### 🧠 AI Adaptive Learning
-- Adaptive learning from server performance
-- Intelligent selection based on history
-- Automatic optimization over time
-- Dynamic scoring: **35% health + 30% speed + 20% reliability + 15% geographic region**
-
-#### 🌐 Support for more than 190 trusted DNS servers
-- Cloudflare, Google, Quad9, OpenDNS
-- AdGuard, NextDNS, Mullvad
-- AhaDNS (US, Netherlands, Poland, India, Singapore, Australia)
-- BlahDNS (Finland, Japan, Germany, Singapore)
-- Pi-DNS (Europe, US)
-- DNScrypt Servers (France, Netherlands, US, Singapore, Australia, Japan)
-- And dozens more servers with global coverage...
+#### 🌐 Upstream Endpoints (all Cloudflare, unfiltered)
+- `cloudflare-dns.com` (primary)
+- `1.1.1.1` and `1.0.0.1`
+- `mozilla.cloudflare-dns.com`
+- `brave.cloudflare-dns.com`
+- Upstream's other ~190 resolvers remain in the source, commented out
 
 #### 🔒 Advanced Privacy and Security
 - **DNS Padding (RFC 8467)**: A real, standard-compliant implementation with a complete OPT Record to prevent traffic analysis
@@ -54,14 +47,13 @@ DoH Proxy Pro is an advanced DNS over HTTPS service built with Cloudflare Worker
 #### 🛡️ Anti-Censorship and Error Handling
 - Automatic **Health Check** every 90 seconds
 - **Circuit Breaker** for failure management
-- **Intelligent Fallback** when racing fails
+- **Intelligent Fallback** to the next Cloudflare endpoint when the primary fails
 - **Request Coalescing**: Intelligently merges duplicate concurrent requests to reduce load and latency
 
 #### ⚡ High Performance and Efficiency
 - **Smart LRU Cache** with automatic TTL and intelligent management (8000 entries)
 - **Negative Caching** for NXDOMAIN responses (300s TTL, 2000 entries)
 - **Adaptive Timeouts** based on each server's average response time
-- Dynamic **Load Balancing** with regional weighting
 - **Concurrent Request Management** with a limit of 150 simultaneous requests
 - **Advanced Rate Limiting** (200 requests per minute per IP)
 - **FNV-1a Cache Key**: A stronger hash algorithm for the cache key that ignores the Transaction ID
@@ -304,11 +296,11 @@ https://your-domain/stats
 ```
 
 **Information available:**
-- Total number of servers (190+)
+- Total number of endpoints (5)
 - Number of healthy servers
 - Average health of the whole system
 - Total number of requests
-- Top 15 server table with:
+- Endpoint table with:
   - Rank and server name
   - Geographic region
   - Success rate
@@ -344,10 +336,12 @@ curl -H 'accept: application/dns-json' \
 
 ## ⚙️ Advanced Settings
 
-### Changing the number of concurrent racing servers
+### Changing the number of concurrent upstream requests
+
+This fork uses `1` (single-upstream forwarding). Raising it re-enables upstream's parallel racing.
 
 ```javascript
-const PARALLEL_RACING_COUNT = 10;
+const PARALLEL_RACING_COUNT = 1;
 ```
 
 ### Changing timeouts
@@ -455,17 +449,17 @@ No. This service only encrypts DNS queries and is not a replacement for a VPN.
 ### Which sites become accessible?
 Sites that are filtered only by DNS. For other cases you need a VPN.
 
-### How does Parallel Racing technology work?
-The system sends requests to the top 10 DNS servers simultaneously (scored by geographic region, speed, health, and reliability) and accepts the first fast response. This reduces latency and increases reliability.
+### Why forward only to Cloudflare?
+Cloudflare already terminates TLS for this proxy, so it can see your queries regardless. Forwarding only to Cloudflare's own resolver means no additional party sees your DNS traffic. Racing many third-party resolvers would expose every query to all of them, and the fastest — not the most trustworthy — answer would win.
+
+### How is this different from using 1.1.1.1 directly?
+It uses the same resolver, but through your own domain — useful where `cloudflare-dns.com` itself is blocked — and adds caching, padding, ECS stripping, and automatic failover between Cloudflare endpoints.
 
 ### What is the Circuit Breaker?
 A mechanism for automatically detecting unhealthy servers. If a server fails 5 times in a row, it is taken out of rotation for 60 seconds and then tested again.
 
-### How does Geo-based Selection work?
-Based on the user's country (via Cloudflare), the system gives nearby servers a higher weight (15%) in the scoring. This reduces latency.
-
-### How does adaptive learning work?
-The system records and analyzes each server's performance (speed, success, reliability) and prioritizes better servers based on that information. Scoring: 35% health + 30% speed + 20% reliability + 15% geographic region.
+### How is the primary endpoint chosen?
+The system records each endpoint's performance (speed, success, reliability) and uses the best-scoring one as the primary. Scoring: 35% health + 30% speed + 20% reliability + 15% geographic region.
 
 ### What is DNS Padding?
 A technique compliant with RFC 8467 that adds a standard OPT Record with a Padding Option (code 12) to the query in order to prevent traffic analysis and usage-pattern detection. A real, complete implementation of this standard guarantees that all upstream servers accept it.
@@ -483,7 +477,7 @@ Based on each server's average response time, the system dynamically adjusts the
 A technique for splitting TLS Hello packets that prevents detection by DPI.
 
 ### Does internet speed decrease?
-No — it may actually increase. With Racing Mode, Adaptive Timeout, Smart Caching, and Geo-selection, speed usually improves.
+No — it may actually increase. The proxy runs at the Cloudflare edge right next to Cloudflare's resolver, and Smart Caching and Adaptive Timeouts keep it fast.
 
 ### What is Request Coalescing?
 When several users or apps query the same domain at the same moment, instead of sending several separate requests upstream, the system sends one request and shares the response among all of them. This reduces server load and latency.
@@ -522,7 +516,7 @@ Go to `/stats`. A real-time page with complete server information is displayed.
 
 ## 🔬 Technical Architecture
 
-### Server Scoring Algorithm
+### Endpoint Scoring Algorithm
 
 ```
 Score = (Health × 0.35) + (Speed × 0.30) + (Reliability × 0.20) + (Region × 0.15) - Freshness_Penalty
